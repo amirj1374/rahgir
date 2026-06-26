@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "sku"}))
 @Getter @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
@@ -22,10 +22,12 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
     private String sku;
 
     private String category;

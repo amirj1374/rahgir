@@ -5,6 +5,7 @@ import ir.rayan.businesscore.basedata.dto.response.CustomerResponse;
 import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
 import ir.rayan.businesscore.basedata.model.Customer;
 import ir.rayan.businesscore.basedata.repository.CustomerRepository;
+import ir.rayan.businesscore.basedata.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,21 +19,23 @@ import java.util.List;
 public class CustomerService {
 
     private final CustomerRepository repository;
+    private final CurrentUser currentUser;
 
     public List<CustomerResponse> findAll() {
-        return repository.findAll().stream().map(CustomerResponse::from).toList();
+        return repository.findByTenantId(currentUser.tenantId()).stream().map(CustomerResponse::from).toList();
     }
 
     @Transactional
     public CustomerResponse create(CustomerRequest request) {
         Customer customer = new Customer();
+        customer.setTenantId(currentUser.tenantId());
         applyRequest(customer, request);
         return CustomerResponse.from(repository.save(customer));
     }
 
     @Transactional
     public CustomerResponse update(Long id, CustomerRequest request) {
-        Customer customer = repository.findById(id)
+        Customer customer = repository.findByIdAndTenantId(id, currentUser.tenantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer", id));
         applyRequest(customer, request);
         return CustomerResponse.from(repository.save(customer));
@@ -40,7 +43,7 @@ public class CustomerService {
 
     @Transactional
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsByIdAndTenantId(id, currentUser.tenantId())) {
             throw new ResourceNotFoundException("Customer", id);
         }
         repository.deleteById(id);

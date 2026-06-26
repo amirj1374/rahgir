@@ -4,6 +4,7 @@ import ir.rayan.businesscore.basedata.dto.request.CompanyRequest;
 import ir.rayan.businesscore.basedata.dto.response.CompanyResponse;
 import ir.rayan.businesscore.basedata.model.Company;
 import ir.rayan.businesscore.basedata.repository.CompanyRepository;
+import ir.rayan.businesscore.basedata.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,14 +17,17 @@ import java.util.Optional;
 public class CompanyService {
 
     private final CompanyRepository repository;
+    private final CurrentUser currentUser;
 
     public Optional<CompanyResponse> find() {
-        return repository.findAll().stream().findFirst().map(CompanyResponse::from);
+        return repository.findByTenantId(currentUser.tenantId()).map(CompanyResponse::from);
     }
 
     @Transactional
     public CompanyResponse upsert(CompanyRequest request) {
-        Company company = repository.findAll().stream().findFirst().orElse(new Company());
+        Long tenantId = currentUser.tenantId();
+        Company company = repository.findByTenantId(tenantId).orElse(new Company());
+        company.setTenantId(tenantId);
         company.setName(request.name());
         company.setNationalId(request.nationalId());
         company.setRegistrationNumber(request.registrationNumber());

@@ -5,6 +5,7 @@ import ir.rayan.businesscore.basedata.dto.response.CategoryResponse;
 import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
 import ir.rayan.businesscore.basedata.model.Category;
 import ir.rayan.businesscore.basedata.repository.CategoryRepository;
+import ir.rayan.businesscore.basedata.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +18,16 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository repository;
+    private final CurrentUser currentUser;
 
     public List<CategoryResponse> findAll() {
-        return repository.findAll().stream().map(CategoryResponse::from).toList();
+        return repository.findByTenantId(currentUser.tenantId()).stream().map(CategoryResponse::from).toList();
     }
 
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
         Category category = new Category();
+        category.setTenantId(currentUser.tenantId());
         category.setName(request.name());
         category.setParentName(request.parentName());
         return CategoryResponse.from(repository.save(category));
@@ -32,7 +35,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse update(Long id, CategoryRequest request) {
-        Category category = repository.findById(id)
+        Category category = repository.findByIdAndTenantId(id, currentUser.tenantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", id));
         category.setName(request.name());
         category.setParentName(request.parentName());
@@ -41,7 +44,7 @@ public class CategoryService {
 
     @Transactional
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsByIdAndTenantId(id, currentUser.tenantId())) {
             throw new ResourceNotFoundException("Category", id);
         }
         repository.deleteById(id);

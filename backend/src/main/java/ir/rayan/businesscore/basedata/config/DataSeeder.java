@@ -36,18 +36,20 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedTenantUsersAndRoles();
-        seedCompany();
-        seedCategories();
-        seedUnits();
-        seedTaxRates();
-        seedWarehouses();
-        seedProducts();
-        seedCustomers();
+        Tenant tenant = seedTenantUsersAndRoles();
+        if (tenant == null) return;
+        long tid = tenant.getId();
+        seedCompany(tid);
+        seedCategories(tid);
+        seedUnits(tid);
+        seedTaxRates(tid);
+        seedWarehouses(tid);
+        seedProducts(tid);
+        seedCustomers(tid);
     }
 
-    private void seedTenantUsersAndRoles() {
-        if (userRepo.count() > 0) return;
+    private Tenant seedTenantUsersAndRoles() {
+        if (userRepo.count() > 0) return tenantRepo.findAll().stream().findFirst().orElse(null);
 
         Tenant tenant = new Tenant();
         tenant.setName("فروشگاه آنلاین رایان");
@@ -65,6 +67,7 @@ public class DataSeeder implements CommandLineRunner {
         seedUser(tenant, admin, "admin", "admin123", "مدیر سیستم", "admin@rayan.ir");
         seedUser(tenant, sales, "sales", "sales123", "امیر حسینی", "amir@rayan.ir");
         seedUser(tenant, inventory, "warehouse", "ware123", "فاطمه نوری", "fateme@rayan.ir");
+        return tenant;
     }
 
     private Role builtinRole(Tenant tenant, String name, Set<Permission> permissions) {
@@ -88,9 +91,10 @@ public class DataSeeder implements CommandLineRunner {
         userRepo.save(u);
     }
 
-    private void seedCompany() {
+    private void seedCompany(long tenantId) {
         if (companyRepo.count() > 0) return;
         Company c = new Company();
+        c.setTenantId(tenantId);
         c.setName("فروشگاه آنلاین رایان");
         c.setEmail("info@rayan-shop.ir");
         c.setPhone("021-88765432");
@@ -99,24 +103,26 @@ public class DataSeeder implements CommandLineRunner {
         companyRepo.save(c);
     }
 
-    private void seedCategories() {
+    private void seedCategories(long tenantId) {
         if (categoryRepo.count() > 0) return;
         for (String[] row : new String[][]{
                 {"پوشاک", "–"}, {"کفش و کیف", "–"}, {"عطر و بهداشت", "–"},
         }) {
             Category cat = new Category();
+            cat.setTenantId(tenantId);
             cat.setName(row[0]);
             cat.setParentName(row[1]);
             categoryRepo.save(cat);
         }
     }
 
-    private void seedUnits() {
+    private void seedUnits(long tenantId) {
         if (unitRepo.count() > 0) return;
         for (String[] row : new String[][]{
                 {"عدد", "عدد", "تعداد"}, {"کیلوگرم", "kg", "وزن"}, {"متر", "m", "طول"},
         }) {
             Unit u = new Unit();
+            u.setTenantId(tenantId);
             u.setName(row[0]);
             u.setSymbol(row[1]);
             u.setType(row[2]);
@@ -124,9 +130,10 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void seedTaxRates() {
+    private void seedTaxRates(long tenantId) {
         if (taxRepo.count() > 0) return;
         TaxRate vat = new TaxRate();
+        vat.setTenantId(tenantId);
         vat.setName("مالیات ارزش افزوده عمومی");
         vat.setRate(10);
         vat.setAppliesTo("همه کالاها");
@@ -134,9 +141,10 @@ public class DataSeeder implements CommandLineRunner {
         taxRepo.save(vat);
     }
 
-    private void seedWarehouses() {
+    private void seedWarehouses(long tenantId) {
         if (warehouseRepo.count() > 0) return;
         Warehouse w = new Warehouse();
+        w.setTenantId(tenantId);
         w.setName("انبار اصلی");
         w.setLocation("تهران، انبار مرکزی");
         w.setManager("علی محمدی");
@@ -145,7 +153,7 @@ public class DataSeeder implements CommandLineRunner {
         warehouseRepo.save(w);
     }
 
-    private void seedProducts() {
+    private void seedProducts(long tenantId) {
         if (productRepo.count() > 0) return;
         record P(String sku, String name, String cat, long price, int stock) {}
         List<P> rows = List.of(
@@ -155,6 +163,7 @@ public class DataSeeder implements CommandLineRunner {
         );
         for (P r : rows) {
             Product p = new Product();
+            p.setTenantId(tenantId);
             p.setSku(r.sku());
             p.setName(r.name());
             p.setCategory(r.cat());
@@ -164,9 +173,10 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void seedCustomers() {
+    private void seedCustomers(long tenantId) {
         if (customerRepo.count() > 0) return;
         Customer c = new Customer();
+        c.setTenantId(tenantId);
         c.setName("علی محمدی");
         c.setPhone("0912-123-4567");
         c.setGroup(Customer.CustomerGroup.VIP);
