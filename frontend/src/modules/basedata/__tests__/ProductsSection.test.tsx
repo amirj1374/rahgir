@@ -15,6 +15,7 @@ vi.mock('../../../api', () => ({
     delete: vi.fn(),
   },
   customersApi: {}, warehousesApi: {}, categoriesApi: {}, unitsApi: {}, taxRatesApi: {}, companyApi: {},
+  usersApi: {}, rolesApi: {},
 }));
 
 function wrap(ui: ReactNode) {

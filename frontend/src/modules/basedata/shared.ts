@@ -2,7 +2,7 @@ import type { Product, Customer, Warehouse, Category, Unit, TaxRate } from '../.
 
 export type Section =
   | 'dashboard' | 'company' | 'products' | 'customers'
-  | 'woocommerce' | 'users' | 'warehouses' | 'categories'
+  | 'woocommerce' | 'users' | 'roles' | 'warehouses' | 'categories'
   | 'units' | 'tax' | 'suppliers';
 
 export const fmtNum = (n: number) => n.toLocaleString('fa-IR');
@@ -23,7 +23,8 @@ export const META: Record<Section, { title: string; crumb: string }> = {
   warehouses:  { title: 'انبارها', crumb: 'اطلاعات پایه / انبارها' },
   units:       { title: 'واحدهای اندازه‌گیری', crumb: 'اطلاعات پایه / واحدها' },
   tax:         { title: 'تنظیمات مالیاتی', crumb: 'اطلاعات پایه / مالیات' },
-  users:       { title: 'کاربران و دسترسی‌ها', crumb: 'اطلاعات پایه / کاربران' },
+  users:       { title: 'کاربران', crumb: 'اطلاعات پایه / کاربران' },
+  roles:       { title: 'نقش‌ها و دسترسی‌ها', crumb: 'اطلاعات پایه / نقش‌ها' },
   woocommerce: { title: 'اتصال ووکامرس', crumb: 'اطلاعات پایه / ووکامرس' },
 };
 
@@ -31,7 +32,7 @@ export const HDR_BTN: Record<Section, string> = {
   dashboard: 'اتصال WC', company: 'ذخیره', products: '+ محصول جدید',
   categories: '+ دسته‌بندی', customers: '+ مشتری جدید', suppliers: 'در حال توسعه',
   warehouses: '+ انبار جدید', units: '+ واحد جدید', tax: '+ نرخ مالیاتی',
-  users: '+ کاربر', woocommerce: 'اتصال ←',
+  users: '+ کاربر', roles: '+ نقش', woocommerce: 'اتصال ←',
 };
 
 export const AV_COLORS = ['#e8a94c', '#38bdf8', '#4ade80', '#a78bfa', '#fb923c'];

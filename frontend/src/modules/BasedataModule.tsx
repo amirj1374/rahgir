@@ -10,6 +10,7 @@ import { CategoriesSection } from './basedata/CategoriesSection';
 import { UnitsSection } from './basedata/UnitsSection';
 import { TaxSection } from './basedata/TaxSection';
 import { UsersSection } from './basedata/UsersSection';
+import { RolesSection } from './basedata/RolesSection';
 import { WoocommerceSection } from './basedata/WoocommerceSection';
 import { Placeholder } from './basedata/Placeholder';
 
@@ -28,6 +29,7 @@ export default function BasedataModule({ onBack }: { onBack: () => void }) {
       case 'units':       return <UnitsSection />;
       case 'tax':         return <TaxSection />;
       case 'users':       return <UsersSection />;
+      case 'roles':       return <RolesSection />;
       case 'woocommerce': return <WoocommerceSection />;
       case 'suppliers':   return <Placeholder icon="🤝" title="تامین‌کنندگان" desc="اطلاعات کامل تامین‌کنندگان، شرایط پرداخت و تاریخچه معاملات." />;
       default:            return null;

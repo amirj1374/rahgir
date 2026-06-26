@@ -1,5 +1,7 @@
 import { useState, useCallback, lazy, Suspense } from 'react';
 import { COLOR } from './styles/tokens';
+import { useAuth } from './auth/AuthContext';
+import { LoginPage } from './auth/LoginPage';
 
 const BasedataModule   = lazy(() => import('./modules/BasedataModule'));
 const SalesModule      = lazy(() => import('./modules/SalesModule'));
@@ -54,8 +56,12 @@ function HomeScreen({ onNavigate }: { onNavigate: (m: AppModule) => void }) {
 }
 
 export default function App() {
+  const { user, loading } = useAuth();
   const [appModule, setAppModule] = useState<AppModule>('home');
   const goHome = useCallback(() => setAppModule('home'), []);
+
+  if (loading) return <ModuleLoader />;
+  if (!user) return <LoginPage />;
 
   if (appModule === 'home') {
     return <HomeScreen onNavigate={setAppModule} />;

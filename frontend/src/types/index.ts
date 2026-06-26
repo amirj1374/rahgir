@@ -79,3 +79,53 @@ export interface TaxRate {
   appliesTo?: string;
   active?: boolean;
 }
+
+// ─── Auth / RBAC ────────────────────────────────────────────────────────────────
+export type Permission =
+  | 'USER_MANAGE' | 'ROLE_MANAGE' | 'BASEDATA_READ' | 'BASEDATA_WRITE'
+  | 'SALES' | 'INVENTORY' | 'ACCOUNTING' | 'REPORTS';
+
+export interface PermissionInfo {
+  name: Permission;
+  label: string;
+}
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  fullName?: string;
+  email?: string;
+  tenantId: number;
+  tenantName: string;
+  roleId: number;
+  roleName: string;
+  permissions: Permission[];
+  active: boolean;
+  lastLogin?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface Role {
+  id?: number;
+  name: string;
+  builtin?: boolean;
+  permissions: Permission[];
+}
+
+export interface UserAccount {
+  id?: number;
+  username: string;
+  password?: string;
+  fullName?: string;
+  email?: string;
+  roleId: number;
+  roleName?: string;
+  tenantName?: string;
+  permissions?: Permission[];
+  active?: boolean;
+  lastLogin?: string;
+}

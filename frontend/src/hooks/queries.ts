@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import {
   companyApi, productsApi, customersApi, warehousesApi,
-  categoriesApi, unitsApi, taxRatesApi,
+  categoriesApi, unitsApi, taxRatesApi, usersApi, rolesApi,
 } from '../api';
-import type { Company, Product, Customer, Warehouse, Category, Unit, TaxRate } from '../types';
+import type {
+  Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
+  UserAccount, Role, PermissionInfo,
+} from '../types';
 
 /** A CRUD resource as exposed by the api module. */
 interface CrudApi<T> {
@@ -54,12 +57,23 @@ function createResourceHooks<T extends Identifiable>(key: QueryKey, resource: Cr
   return { useList, useCreate, useUpdate, useRemove };
 }
 
+export const users      = createResourceHooks<UserAccount>(['users'], usersApi);
+export const roles      = createResourceHooks<Role>(['roles'], rolesApi);
 export const products   = createResourceHooks<Product>(['products'], productsApi);
 export const customers  = createResourceHooks<Customer>(['customers'], customersApi);
 export const warehouses = createResourceHooks<Warehouse>(['warehouses'], warehousesApi);
 export const categories = createResourceHooks<Category>(['categories'], categoriesApi);
 export const units      = createResourceHooks<Unit>(['units'], unitsApi);
 export const taxRates   = createResourceHooks<TaxRate>(['tax-rates'], taxRatesApi);
+
+/** Read-only catalog of assignable permissions (for building roles). */
+export function usePermissionCatalog() {
+  return useQuery<PermissionInfo[]>({
+    queryKey: ['permissions'],
+    queryFn: rolesApi.permissions,
+    staleTime: Infinity,
+  });
+}
 
 /** Company is a singleton (one row), so it gets bespoke hooks. */
 export function useCompany(fallback?: Company) {

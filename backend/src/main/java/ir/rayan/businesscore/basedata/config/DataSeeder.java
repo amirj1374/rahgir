@@ -5,10 +5,12 @@ import ir.rayan.businesscore.basedata.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Seeds a baseline dataset on first run so the app is never empty.
@@ -27,9 +29,14 @@ public class DataSeeder implements CommandLineRunner {
     private final WarehouseRepository warehouseRepo;
     private final ProductRepository productRepo;
     private final CustomerRepository customerRepo;
+    private final UserRepository userRepo;
+    private final TenantRepository tenantRepo;
+    private final RoleRepository roleRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
+        seedTenantUsersAndRoles();
         seedCompany();
         seedCategories();
         seedUnits();
@@ -37,6 +44,46 @@ public class DataSeeder implements CommandLineRunner {
         seedWarehouses();
         seedProducts();
         seedCustomers();
+    }
+
+    private void seedTenantUsersAndRoles() {
+        if (userRepo.count() > 0) return;
+
+        Tenant tenant = new Tenant();
+        tenant.setName("فروشگاه آنلاین رایان");
+        tenant.setActive(true);
+        tenantRepo.save(tenant);
+
+        Role admin = builtinRole(tenant, "مدیر ارشد", Set.of(Permission.values()));
+        Role sales = builtinRole(tenant, "فروش", Set.of(Permission.BASEDATA_READ, Permission.SALES, Permission.REPORTS));
+        Role inventory = builtinRole(tenant, "انبارداری", Set.of(Permission.BASEDATA_READ, Permission.INVENTORY));
+        builtinRole(tenant, "حسابداری", Set.of(Permission.BASEDATA_READ, Permission.ACCOUNTING, Permission.REPORTS));
+        builtinRole(tenant, "مشاهده", Set.of(Permission.BASEDATA_READ, Permission.REPORTS));
+
+        seedUser(tenant, admin, "admin", "admin123", "مدیر سیستم", "admin@rayan.ir");
+        seedUser(tenant, sales, "sales", "sales123", "امیر حسینی", "amir@rayan.ir");
+        seedUser(tenant, inventory, "warehouse", "ware123", "فاطمه نوری", "fateme@rayan.ir");
+    }
+
+    private Role builtinRole(Tenant tenant, String name, Set<Permission> permissions) {
+        Role role = new Role();
+        role.setTenant(tenant);
+        role.setName(name);
+        role.setPermissions(new java.util.HashSet<>(permissions));
+        role.setBuiltin(true);
+        return roleRepo.save(role);
+    }
+
+    private void seedUser(Tenant tenant, Role role, String username, String pass, String fullName, String email) {
+        User u = new User();
+        u.setTenant(tenant);
+        u.setRole(role);
+        u.setUsername(username);
+        u.setPassword(passwordEncoder.encode(pass));
+        u.setFullName(fullName);
+        u.setEmail(email);
+        u.setActive(true);
+        userRepo.save(u);
     }
 
     private void seedCompany() {

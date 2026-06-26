@@ -1,5 +1,8 @@
 import axios from 'axios';
-import type { Company, Product, Customer, Warehouse, Category, Unit, TaxRate } from '../types';
+import type {
+  Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
+  AuthResponse, AuthUser, Role, UserAccount, PermissionInfo,
+} from '../types';
 
 /** Backend wraps every response in { success, data, message }. */
 interface ApiEnvelope<T> {
@@ -8,7 +11,24 @@ interface ApiEnvelope<T> {
   message: string | null;
 }
 
+const TOKEN_KEY = 'bc_token';
+export const tokenStore = {
+  get: () => localStorage.getItem(TOKEN_KEY),
+  set: (t: string) => localStorage.setItem(TOKEN_KEY, t),
+  clear: () => localStorage.removeItem(TOKEN_KEY),
+};
+
+/** Fired when the server rejects the token; the app listens and logs out. */
+export const AUTH_EXPIRED_EVENT = 'bc:auth-expired';
+
 const api = axios.create({ baseURL: '/api' });
+
+// Attach the bearer token to every request.
+api.interceptors.request.use(config => {
+  const token = tokenStore.get();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 /**
  * Unwrap the ApiResponse envelope so callers receive the raw payload.
@@ -23,11 +43,38 @@ api.interceptors.response.use(
     return response;
   },
   error => {
+    // A 401 on anything other than the login attempt means the session expired.
+    const url = error.config?.url ?? '';
+    if (error.response?.status === 401 && !url.includes('/auth/login')) {
+      tokenStore.clear();
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
     const envelope = error.response?.data as ApiEnvelope<unknown> | undefined;
     const message = envelope?.message ?? error.message ?? 'خطای ناشناخته';
     return Promise.reject(new Error(message));
   },
 );
+
+export const authApi = {
+  login: (username: string, password: string) =>
+    api.post<AuthResponse>('/auth/login', { username, password }).then(r => r.data),
+  me: () => api.get<AuthUser>('/auth/me').then(r => r.data),
+};
+
+export const usersApi = {
+  list: () => api.get<UserAccount[]>('/users').then(r => r.data),
+  create: (data: UserAccount) => api.post<UserAccount>('/users', data).then(r => r.data),
+  update: (id: number, data: UserAccount) => api.put<UserAccount>(`/users/${id}`, data).then(r => r.data),
+  delete: (id: number) => api.delete(`/users/${id}`).then(() => id),
+};
+
+export const rolesApi = {
+  list: () => api.get<Role[]>('/roles').then(r => r.data),
+  permissions: () => api.get<PermissionInfo[]>('/roles/permissions').then(r => r.data),
+  create: (data: Role) => api.post<Role>('/roles', data).then(r => r.data),
+  update: (id: number, data: Role) => api.put<Role>(`/roles/${id}`, data).then(r => r.data),
+  delete: (id: number) => api.delete(`/roles/${id}`).then(() => id),
+};
 
 export const companyApi = {
   get: () => api.get<Company>('/company').then(r => r.data),

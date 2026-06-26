@@ -1,7 +1,9 @@
 import { memo } from 'react';
 import type { Section } from './shared';
+import { useAuth } from '../../auth/AuthContext';
 
 function SidebarInner({ sec, onNav }: { sec: Section; onNav: (s: Section) => void }) {
+  const { has, user, logout } = useAuth();
   const item = (id: Section, icon: string, label: string, badge?: string, bbg?: string, bc?: string) => (
     <button
       key={id}
@@ -26,12 +28,16 @@ function SidebarInner({ sec, onNav }: { sec: Section; onNav: (s: Section) => voi
     </button>
   );
 
+  const accessItems = [
+    has('USER_MANAGE') ? item('users', '👤', 'کاربران') : null,
+    has('ROLE_MANAGE') ? item('roles', '🔑', 'نقش‌ها و دسترسی‌ها') : null,
+  ].filter(Boolean);
+
   const groups = [
     { label: 'داشبورد', items: [item('dashboard', '🏠', 'پیشخوان')] },
     { label: 'تنظیمات کسب‌وکار', items: [
       item('company', '🏢', 'اطلاعات شرکت'),
       item('warehouses', '🏭', 'انبارها', '۲'),
-      item('users', '👤', 'کاربران', '۵'),
     ]},
     { label: 'داده‌های پایه', items: [
       item('products', '🏷️', 'محصولات'),
@@ -43,6 +49,7 @@ function SidebarInner({ sec, onNav }: { sec: Section; onNav: (s: Section) => voi
       item('units', '📐', 'واحدها'),
       item('tax', '💹', 'تنظیمات مالیاتی'),
     ]},
+    ...(accessItems.length ? [{ label: 'مدیریت دسترسی', items: accessItems }] : []),
     { label: 'یکپارچه‌سازی', items: [
       item('woocommerce', '🔗', 'ووکامرس'),
     ]},
@@ -68,12 +75,14 @@ function SidebarInner({ sec, onNav }: { sec: Section; onNav: (s: Section) => voi
       </nav>
 
       <div style={{ padding: '11px 12px', borderTop: '1px solid rgba(255,255,255,.05)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 29, height: 29, background: 'rgba(232,169,76,.15)', border: '1.5px solid rgba(232,169,76,.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, color: '#e8a94c', flexShrink: 0 }}>م</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#e8edf5' }}>مدیر سیستم</div>
-          <div style={{ fontSize: 9, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>admin@rayan.ir</div>
+        <div style={{ width: 29, height: 29, background: 'rgba(232,169,76,.15)', border: '1.5px solid rgba(232,169,76,.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, color: '#e8a94c', flexShrink: 0 }}>
+          {(user?.fullName || user?.username || '؟').charAt(0)}
         </div>
-        <span style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>⚙</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#e8edf5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName || user?.username}</div>
+          <div style={{ fontSize: 9, color: '#e8a94c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.roleName} · {user?.tenantName}</div>
+        </div>
+        <button onClick={logout} title="خروج" style={{ background: 'none', border: 'none', fontSize: 14, color: '#64748b', cursor: 'pointer' }}>⎋</button>
       </div>
     </aside>
   );
