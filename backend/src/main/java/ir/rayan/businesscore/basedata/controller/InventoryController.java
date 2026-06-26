@@ -1,8 +1,11 @@
 package ir.rayan.businesscore.basedata.controller;
 
 import ir.rayan.businesscore.basedata.dto.ApiResponse;
+import ir.rayan.businesscore.basedata.dto.request.InventoryStageRequest;
+import ir.rayan.businesscore.basedata.dto.request.StageAdvanceRequest;
 import ir.rayan.businesscore.basedata.dto.request.StockMovementRequest;
 import ir.rayan.businesscore.basedata.dto.request.StockTransferRequest;
+import ir.rayan.businesscore.basedata.dto.response.InventoryStageResponse;
 import ir.rayan.businesscore.basedata.dto.response.StockLevelResponse;
 import ir.rayan.businesscore.basedata.dto.response.StockMovementResponse;
 import ir.rayan.businesscore.basedata.service.InventoryService;
@@ -20,6 +23,30 @@ public class InventoryController {
 
     private final InventoryService service;
 
+    // ─── Stages ─────────────────────────────────────────────────────────────────
+    @GetMapping("/stages")
+    public ApiResponse<List<InventoryStageResponse>> stages() {
+        return ApiResponse.ok(service.stages());
+    }
+
+    @PostMapping("/stages")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<InventoryStageResponse> createStage(@Valid @RequestBody InventoryStageRequest request) {
+        return ApiResponse.ok(service.createStage(request));
+    }
+
+    @PutMapping("/stages/{id}")
+    public ApiResponse<InventoryStageResponse> updateStage(@PathVariable Long id, @Valid @RequestBody InventoryStageRequest request) {
+        return ApiResponse.ok(service.updateStage(id, request));
+    }
+
+    @DeleteMapping("/stages/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteStage(@PathVariable Long id) {
+        service.deleteStage(id);
+    }
+
+    // ─── Stock ──────────────────────────────────────────────────────────────────
     @GetMapping("/levels")
     public ApiResponse<List<StockLevelResponse>> levels() {
         return ApiResponse.ok(service.stockLevels());
@@ -40,5 +67,11 @@ public class InventoryController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<List<StockMovementResponse>> transfer(@Valid @RequestBody StockTransferRequest request) {
         return ApiResponse.ok(service.transfer(request));
+    }
+
+    @PostMapping("/advance")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<List<StockMovementResponse>> advance(@Valid @RequestBody StageAdvanceRequest request) {
+        return ApiResponse.ok(service.advance(request));
     }
 }

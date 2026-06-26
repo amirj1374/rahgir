@@ -45,6 +45,13 @@ public class StockMovement {
     private Long warehouseId;
     private String warehouseName;
 
+    /** Pipeline stage this movement landed in ({@code 0} = unstaged). */
+    @Column(nullable = false)
+    private Long stageId = 0L;
+    private String stageName;
+    /** For an advance between stages, the stage the goods left. */
+    private Long fromStageId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MovementType type;
@@ -70,6 +77,8 @@ public class StockMovement {
         ADJUST_OUT(-1, "تعدیل (کاهش)"),
         TRANSFER_IN(+1, "انتقال ورودی"),
         TRANSFER_OUT(-1, "انتقال خروجی"),
+        STAGE_IN(+1, "ورود به مرحله"),
+        STAGE_OUT(-1, "خروج از مرحله"),
         RETURN_IN(+1, "مرجوعی فروش");
 
         private final int direction;

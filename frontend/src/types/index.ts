@@ -120,11 +120,29 @@ export interface Invoice {
 // ─── Inventory ──────────────────────────────────────────────────────────────────
 export type MovementType =
   | 'PURCHASE' | 'SALE' | 'ADJUST_IN' | 'ADJUST_OUT'
-  | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'RETURN_IN';
+  | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'STAGE_IN' | 'STAGE_OUT' | 'RETURN_IN';
+
+export type StageDirection = 'INBOUND' | 'OUTBOUND';
+
+export interface InventoryStage {
+  id?: number;
+  name: string;
+  direction?: StageDirection;
+  directionLabel?: string;
+  sequence?: number;
+  available?: boolean;
+}
 
 export interface StockPerWarehouse {
   warehouseId: number;
   warehouseName: string;
+  quantity: number;
+}
+
+export interface StageStock {
+  stageId: number | null;
+  stageName: string;
+  available: boolean;
   quantity: number;
 }
 
@@ -133,6 +151,8 @@ export interface VariantStock {
   variantLabel: string;
   sku?: string;
   quantity: number;
+  availableQuantity: number;
+  stages: StageStock[];
   warehouses: StockPerWarehouse[];
 }
 
@@ -142,6 +162,7 @@ export interface StockLevel {
   sku?: string;
   hasVariants: boolean;
   totalQuantity: number;
+  availableQuantity: number;
   variants: VariantStock[];
 }
 
@@ -154,6 +175,8 @@ export interface StockMovement {
   variantLabel?: string;
   warehouseId: number;
   warehouseName: string;
+  stageId?: number;
+  stageName?: string;
   type: MovementType;
   typeLabel: string;
   quantity: number;
@@ -167,6 +190,7 @@ export interface StockMovementInput {
   productId: number;
   variantId?: number | null;
   warehouseId: number;
+  stageId?: number | null;
   type: MovementType;
   quantity: number;
   note?: string;
@@ -175,8 +199,19 @@ export interface StockMovementInput {
 export interface StockTransferInput {
   productId: number;
   variantId?: number | null;
+  stageId?: number | null;
   fromWarehouseId: number;
   toWarehouseId: number;
+  quantity: number;
+  note?: string;
+}
+
+export interface StageAdvanceInput {
+  productId: number;
+  variantId?: number | null;
+  warehouseId: number;
+  fromStageId: number;
+  toStageId: number;
   quantity: number;
   note?: string;
 }

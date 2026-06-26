@@ -37,6 +37,7 @@ public class DataSeeder implements CommandLineRunner {
     private final InvoiceRepository invoiceRepo;
     private final StockLevelRepository stockLevelRepo;
     private final StockMovementRepository stockMovementRepo;
+    private final InventoryStageRepository inventoryStageRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -49,6 +50,7 @@ public class DataSeeder implements CommandLineRunner {
         seedUnits(tid);
         seedTaxRates(tid);
         seedWarehouses(tid);
+        seedStages(tid);
         seedProducts(tid);
         seedInitialStock(tid);
         seedCustomers(tid);
@@ -209,31 +211,55 @@ public class DataSeeder implements CommandLineRunner {
         productVariantRepo.save(v);
     }
 
+    /** A starter pipeline so the demo shows multi-stage flow out of the box. */
+    private void seedStages(long tenantId) {
+        if (inventoryStageRepo.countByTenantId(tenantId) > 0) return;
+        stage(tenantId, "دریافت موقت", InventoryStage.Direction.INBOUND, 1, false);
+        stage(tenantId, "کنترل کیفی", InventoryStage.Direction.INBOUND, 2, false);
+        stage(tenantId, "موجود در انبار", InventoryStage.Direction.INBOUND, 3, true);
+        stage(tenantId, "آماده ارسال", InventoryStage.Direction.OUTBOUND, 1, false);
+        stage(tenantId, "ارسال‌شده", InventoryStage.Direction.OUTBOUND, 2, false);
+    }
+
+    private void stage(long tenantId, String name, InventoryStage.Direction dir, int seq, boolean available) {
+        InventoryStage s = new InventoryStage();
+        s.setTenantId(tenantId);
+        s.setName(name);
+        s.setDirection(dir);
+        s.setSequence(seq);
+        s.setAvailable(available);
+        inventoryStageRepo.save(s);
+    }
+
     /**
      * Opens the stock ledger: each product's (or variant's) starting count becomes
-     * a PURCHASE into the main warehouse, so the ledger and the cached levels agree.
+     * a PURCHASE into the available stage of the main warehouse, so the ledger and
+     * the cached levels agree and the stock is immediately sellable.
      */
     private void seedInitialStock(long tenantId) {
         if (stockLevelRepo.count() > 0) return;
         Warehouse warehouse = warehouseRepo.findByTenantId(tenantId).stream().findFirst().orElse(null);
         if (warehouse == null) return;
+        InventoryStage available = inventoryStageRepo.findByTenantIdAndAvailableTrue(tenantId)
+                .stream().findFirst().orElse(null);
 
         for (Product p : productRepo.findByTenantId(tenantId)) {
             List<ProductVariant> variants = productVariantRepo.findByProductId(p.getId());
             if (variants.isEmpty()) {
-                openingStock(tenantId, warehouse, p, null,
+                openingStock(tenantId, warehouse, available, p, null,
                         BigDecimal.valueOf(p.getStock() == null ? 0 : p.getStock()));
             } else {
                 for (ProductVariant v : variants) {
-                    openingStock(tenantId, warehouse, p, v,
+                    openingStock(tenantId, warehouse, available, p, v,
                             BigDecimal.valueOf(v.getStock() == null ? 0 : v.getStock()));
                 }
             }
         }
     }
 
-    private void openingStock(long tenantId, Warehouse warehouse, Product p, ProductVariant v, BigDecimal qty) {
+    private void openingStock(long tenantId, Warehouse warehouse, InventoryStage stage, Product p, ProductVariant v, BigDecimal qty) {
         long variantId = v != null ? v.getId() : 0L;
+        long stageId = stage != null ? stage.getId() : 0L;
         String variantLabel = v != null ? join(v.getAttr1Value(), v.getAttr2Value()) : null;
 
         StockLevel level = new StockLevel();
@@ -241,6 +267,7 @@ public class DataSeeder implements CommandLineRunner {
         level.setProductId(p.getId());
         level.setVariantId(variantId);
         level.setWarehouseId(warehouse.getId());
+        level.setStageId(stageId);
         level.setQuantity(qty);
         stockLevelRepo.save(level);
 
@@ -253,6 +280,8 @@ public class DataSeeder implements CommandLineRunner {
         m.setVariantLabel(variantLabel);
         m.setWarehouseId(warehouse.getId());
         m.setWarehouseName(warehouse.getName());
+        m.setStageId(stageId);
+        m.setStageName(stage != null ? stage.getName() : null);
         m.setType(StockMovement.MovementType.PURCHASE);
         m.setQuantity(qty);
         m.setReference("موجودی اولیه");

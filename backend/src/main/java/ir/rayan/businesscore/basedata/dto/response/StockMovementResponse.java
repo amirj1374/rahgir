@@ -9,6 +9,7 @@ public record StockMovementResponse(
         Long id, Long productId, String productName, String sku,
         Long variantId, String variantLabel,
         Long warehouseId, String warehouseName,
+        Long stageId, String stageName,
         StockMovement.MovementType type, String typeLabel,
         BigDecimal quantity, String reference, String note,
         LocalDateTime createdAt, BigDecimal balanceAfter
@@ -18,6 +19,7 @@ public record StockMovementResponse(
                 m.getId(), m.getProductId(), m.getProductName(), m.getSku(),
                 m.getVariantId(), m.getVariantLabel(),
                 m.getWarehouseId(), m.getWarehouseName(),
+                m.getStageId(), m.getStageName(),
                 m.getType(), m.getType().getLabel(),
                 m.getQuantity(), m.getReference(), m.getNote(),
                 m.getCreatedAt(), m.getBalanceAfter());

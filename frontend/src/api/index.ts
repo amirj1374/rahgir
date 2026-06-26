@@ -4,6 +4,7 @@ import type {
   AuthResponse, AuthUser, Role, UserAccount, PermissionInfo,
   Subscription, Plan, TenantTypeInfo, Invoice,
   StockLevel, StockMovement, StockMovementInput, StockTransferInput,
+  InventoryStage, StageAdvanceInput,
 } from '../types';
 
 /** Backend wraps every response in { success, data, message }. */
@@ -100,6 +101,14 @@ export const inventoryApi = {
     api.get<StockMovement[]>('/inventory/movements', { params: productId ? { productId } : {} }).then(r => r.data),
   record: (data: StockMovementInput) => api.post<StockMovement>('/inventory/movements', data).then(r => r.data),
   transfer: (data: StockTransferInput) => api.post<StockMovement[]>('/inventory/transfer', data).then(r => r.data),
+  advance: (data: StageAdvanceInput) => api.post<StockMovement[]>('/inventory/advance', data).then(r => r.data),
+};
+
+export const stagesApi = {
+  list: () => api.get<InventoryStage[]>('/inventory/stages').then(r => r.data),
+  create: (data: InventoryStage) => api.post<InventoryStage>('/inventory/stages', data).then(r => r.data),
+  update: (id: number, data: InventoryStage) => api.put<InventoryStage>(`/inventory/stages/${id}`, data).then(r => r.data),
+  delete: (id: number) => api.delete(`/inventory/stages/${id}`).then(() => id),
 };
 
 export const companyApi = {

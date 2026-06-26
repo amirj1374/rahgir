@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 public record StockTransferRequest(
         @NotNull(message = "محصول الزامی است") Long productId,
         Long variantId,
+        /** Stage the moved stock sits in on both sides. Null → unstaged. */
+        Long stageId,
         @NotNull(message = "انبار مبدأ الزامی است") Long fromWarehouseId,
         @NotNull(message = "انبار مقصد الزامی است") Long toWarehouseId,
         @NotNull @Positive(message = "تعداد باید بزرگ‌تر از صفر باشد") BigDecimal quantity,

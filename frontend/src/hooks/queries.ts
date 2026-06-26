@@ -2,11 +2,11 @@ import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/
 import {
   companyApi, productsApi, customersApi, warehousesApi,
   categoriesApi, unitsApi, taxRatesApi, usersApi, rolesApi, subscriptionApi,
-  invoicesApi, inventoryApi,
+  invoicesApi, inventoryApi, stagesApi,
 } from '../api';
 import type {
   Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
-  UserAccount, Role, PermissionInfo, Invoice,
+  UserAccount, Role, PermissionInfo, Invoice, InventoryStage,
 } from '../types';
 
 /** A CRUD resource as exposed by the api module. */
@@ -111,6 +111,27 @@ function useInventoryMutation<TArgs>(fn: (args: TArgs) => Promise<unknown>) {
 
 export const useRecordMovement = () => useInventoryMutation(inventoryApi.record);
 export const useTransferStock = () => useInventoryMutation(inventoryApi.transfer);
+export const useAdvanceStage = () => useInventoryMutation(inventoryApi.advance);
+
+export function useStages() {
+  return useQuery({ queryKey: ['stages'], queryFn: stagesApi.list });
+}
+
+/** Stage edits change which stock is sellable, so refresh stock levels too. */
+function useStageMutation<TArgs>(fn: (args: TArgs) => Promise<unknown>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stages'] });
+      qc.invalidateQueries({ queryKey: ['stock-levels'] });
+    },
+  });
+}
+
+export const useCreateStage = () => useStageMutation((data: InventoryStage) => stagesApi.create(data));
+export const useUpdateStage = () => useStageMutation(({ id, data }: { id: number; data: InventoryStage }) => stagesApi.update(id, data));
+export const useDeleteStage = () => useStageMutation((id: number) => stagesApi.delete(id));
 
 /** Read-only catalog of assignable permissions (for building roles). */
 export function usePermissionCatalog() {

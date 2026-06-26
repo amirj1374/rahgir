@@ -16,11 +16,11 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "stock_levels", uniqueConstraints =
-        @UniqueConstraint(columnNames = {"tenant_id", "productId", "variantId", "warehouseId"}))
+        @UniqueConstraint(columnNames = {"tenant_id", "productId", "variantId", "warehouseId", "stageId"}))
 @Getter @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-@ToString(of = {"id", "productId", "variantId", "warehouseId", "quantity"})
+@ToString(of = {"id", "productId", "variantId", "warehouseId", "stageId", "quantity"})
 public class StockLevel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,6 +42,13 @@ public class StockLevel {
 
     @Column(nullable = false)
     private Long warehouseId;
+
+    /**
+     * The pipeline stage this stock sits in. {@code 0} means "unstaged" — used
+     * when the tenant hasn't defined stages, in which case it counts as on-hand.
+     */
+    @Column(nullable = false)
+    private Long stageId = 0L;
 
     @Column(nullable = false)
     private BigDecimal quantity = BigDecimal.ZERO;

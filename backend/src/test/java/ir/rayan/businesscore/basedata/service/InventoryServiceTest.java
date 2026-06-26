@@ -1,5 +1,6 @@
 package ir.rayan.businesscore.basedata.service;
 
+import ir.rayan.businesscore.basedata.dto.request.StageAdvanceRequest;
 import ir.rayan.businesscore.basedata.dto.request.StockMovementRequest;
 import ir.rayan.businesscore.basedata.dto.request.StockTransferRequest;
 import ir.rayan.businesscore.basedata.dto.response.StockLevelResponse;
@@ -32,6 +33,7 @@ class InventoryServiceTest {
     @Autowired WarehouseRepository warehouseRepo;
     @Autowired StockLevelRepository levelRepo;
     @Autowired StockMovementRepository movementRepo;
+    @Autowired InventoryStageRepository stageRepo;
 
     private Long productId;
     private Long whA;
@@ -41,6 +43,7 @@ class InventoryServiceTest {
     void setup() {
         movementRepo.deleteAll();
         levelRepo.deleteAll();
+        stageRepo.deleteAll();
         variantRepo.deleteAll();
         productRepo.deleteAll();
         warehouseRepo.deleteAll();
@@ -75,7 +78,7 @@ class InventoryServiceTest {
     @Test
     void purchaseRaisesStockAndLogsBalance() {
         var resp = service.record(new StockMovementRequest(
-                productId, null, whA, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(10), null));
+                productId, null, whA, null, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(10), null));
         assertThat(resp.balanceAfter()).isEqualByComparingTo("10");
 
         StockLevelResponse level = stockOf(productId);
@@ -84,16 +87,16 @@ class InventoryServiceTest {
 
     @Test
     void sellingMoreThanOnHandIsRejected() {
-        service.record(new StockMovementRequest(productId, null, whA, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(3), null));
+        service.record(new StockMovementRequest(productId, null, whA, null, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(3), null));
         assertThatThrownBy(() -> service.record(new StockMovementRequest(
-                productId, null, whA, StockMovement.MovementType.SALE, BigDecimal.valueOf(5), null)))
+                productId, null, whA, null, StockMovement.MovementType.SALE, BigDecimal.valueOf(5), null)))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
     void transferMovesStockBetweenWarehouses() {
-        service.record(new StockMovementRequest(productId, null, whA, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(8), null));
-        service.transfer(new StockTransferRequest(productId, null, whA, whB, BigDecimal.valueOf(5), null));
+        service.record(new StockMovementRequest(productId, null, whA, null, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(8), null));
+        service.transfer(new StockTransferRequest(productId, null, null, whA, whB, BigDecimal.valueOf(5), null));
 
         StockLevelResponse level = stockOf(productId);
         assertThat(level.totalQuantity()).isEqualByComparingTo("8");
@@ -108,7 +111,7 @@ class InventoryServiceTest {
     @Test
     void transferToSameWarehouseRejected() {
         assertThatThrownBy(() -> service.transfer(new StockTransferRequest(
-                productId, null, whA, whA, BigDecimal.valueOf(1), null)))
+                productId, null, null, whA, whA, BigDecimal.valueOf(1), null)))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
@@ -123,8 +126,8 @@ class InventoryServiceTest {
         Long whiteS = saveVariant(shirt, "سفید", "S", 0);
         Long blackL = saveVariant(shirt, "مشکی", "L", 0);
 
-        service.record(new StockMovementRequest(shirtId, whiteS, whA, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(2), null));
-        service.record(new StockMovementRequest(shirtId, blackL, whA, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(3), null));
+        service.record(new StockMovementRequest(shirtId, whiteS, whA, null, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(2), null));
+        service.record(new StockMovementRequest(shirtId, blackL, whA, null, StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(3), null));
 
         StockLevelResponse level = stockOf(shirtId);
         assertThat(level.hasVariants()).isTrue();
@@ -134,6 +137,28 @@ class InventoryServiceTest {
         BigDecimal black = level.variants().stream().filter(v -> blackL.equals(v.variantId())).findFirst().orElseThrow().quantity();
         assertThat(white).isEqualByComparingTo("2");
         assertThat(black).isEqualByComparingTo("3");
+    }
+
+    @Test
+    void stagesGateSellableStockAndAdvanceMovesBetweenThem() {
+        // pipeline: receiving (not available) → in-stock (available)
+        var receiving = service.createStage(new ir.rayan.businesscore.basedata.dto.request.InventoryStageRequest(
+                "دریافت", ir.rayan.businesscore.basedata.model.InventoryStage.Direction.INBOUND, 1, false));
+        var inStock = service.createStage(new ir.rayan.businesscore.basedata.dto.request.InventoryStageRequest(
+                "موجود", ir.rayan.businesscore.basedata.model.InventoryStage.Direction.INBOUND, 2, true));
+
+        // receive 10 into the non-available stage → total 10, sellable 0
+        service.record(new StockMovementRequest(productId, null, whA, receiving.id(),
+                StockMovement.MovementType.PURCHASE, BigDecimal.valueOf(10), null));
+        StockLevelResponse afterReceive = stockOf(productId);
+        assertThat(afterReceive.totalQuantity()).isEqualByComparingTo("10");
+        assertThat(afterReceive.availableQuantity()).isEqualByComparingTo("0");
+
+        // advance 6 to the available stage → sellable 6
+        service.advance(new StageAdvanceRequest(productId, null, whA, receiving.id(), inStock.id(), BigDecimal.valueOf(6), null));
+        StockLevelResponse afterAdvance = stockOf(productId);
+        assertThat(afterAdvance.totalQuantity()).isEqualByComparingTo("10");
+        assertThat(afterAdvance.availableQuantity()).isEqualByComparingTo("6");
     }
 
     private StockLevelResponse stockOf(Long pid) {
