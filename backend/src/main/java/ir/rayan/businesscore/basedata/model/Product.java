@@ -1,8 +1,11 @@
 package ir.rayan.businesscore.basedata.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -10,8 +13,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "products")
-@Data
+@Getter @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "name", "sku"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

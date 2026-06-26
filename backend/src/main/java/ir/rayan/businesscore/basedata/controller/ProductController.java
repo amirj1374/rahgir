@@ -1,9 +1,12 @@
 package ir.rayan.businesscore.basedata.controller;
 
+import ir.rayan.businesscore.basedata.dto.ApiResponse;
+import ir.rayan.businesscore.basedata.dto.request.ProductRequest;
 import ir.rayan.businesscore.basedata.model.Product;
-import ir.rayan.businesscore.basedata.repository.ProductRepository;
+import ir.rayan.businesscore.basedata.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,29 +16,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductRepository repo;
+    private final ProductService service;
 
     @GetMapping
-    public List<Product> list() {
-        return repo.findAll();
+    public ApiResponse<List<Product>> list() {
+        return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
-    public Product create(@RequestBody Product product) {
-        return repo.save(product);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Product> create(@Valid @RequestBody ProductRequest request) {
+        return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> update(@PathVariable Long id, @RequestBody Product product) {
-        return repo.findById(id).map(existing -> {
-            product.setId(id);
-            return ResponseEntity.ok(repo.save(product));
-        }).orElse(ResponseEntity.notFound().build());
+    public ApiResponse<Product> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        return ApiResponse.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repo.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

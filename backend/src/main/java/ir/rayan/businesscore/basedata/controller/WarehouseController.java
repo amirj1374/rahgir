@@ -1,9 +1,12 @@
 package ir.rayan.businesscore.basedata.controller;
 
+import ir.rayan.businesscore.basedata.dto.ApiResponse;
+import ir.rayan.businesscore.basedata.dto.request.WarehouseRequest;
 import ir.rayan.businesscore.basedata.model.Warehouse;
-import ir.rayan.businesscore.basedata.repository.WarehouseRepository;
+import ir.rayan.businesscore.basedata.service.WarehouseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,29 +16,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WarehouseController {
 
-    private final WarehouseRepository repo;
+    private final WarehouseService service;
 
     @GetMapping
-    public List<Warehouse> list() {
-        return repo.findAll();
+    public ApiResponse<List<Warehouse>> list() {
+        return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
-    public Warehouse create(@RequestBody Warehouse warehouse) {
-        return repo.save(warehouse);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Warehouse> create(@Valid @RequestBody WarehouseRequest request) {
+        return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Warehouse> update(@PathVariable Long id, @RequestBody Warehouse warehouse) {
-        return repo.findById(id).map(existing -> {
-            warehouse.setId(id);
-            return ResponseEntity.ok(repo.save(warehouse));
-        }).orElse(ResponseEntity.notFound().build());
+    public ApiResponse<Warehouse> update(@PathVariable Long id, @Valid @RequestBody WarehouseRequest request) {
+        return ApiResponse.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repo.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

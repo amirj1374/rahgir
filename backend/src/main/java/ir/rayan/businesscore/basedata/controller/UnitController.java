@@ -1,9 +1,12 @@
 package ir.rayan.businesscore.basedata.controller;
 
+import ir.rayan.businesscore.basedata.dto.ApiResponse;
+import ir.rayan.businesscore.basedata.dto.request.UnitRequest;
 import ir.rayan.businesscore.basedata.model.Unit;
-import ir.rayan.businesscore.basedata.repository.UnitRepository;
+import ir.rayan.businesscore.basedata.service.UnitService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,29 +16,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UnitController {
 
-    private final UnitRepository repo;
+    private final UnitService service;
 
     @GetMapping
-    public List<Unit> list() {
-        return repo.findAll();
+    public ApiResponse<List<Unit>> list() {
+        return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
-    public Unit create(@RequestBody Unit unit) {
-        return repo.save(unit);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Unit> create(@Valid @RequestBody UnitRequest request) {
+        return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Unit> update(@PathVariable Long id, @RequestBody Unit unit) {
-        return repo.findById(id).map(existing -> {
-            unit.setId(id);
-            return ResponseEntity.ok(repo.save(unit));
-        }).orElse(ResponseEntity.notFound().build());
+    public ApiResponse<Unit> update(@PathVariable Long id, @Valid @RequestBody UnitRequest request) {
+        return ApiResponse.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repo.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

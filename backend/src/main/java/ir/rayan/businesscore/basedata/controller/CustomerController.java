@@ -1,9 +1,12 @@
 package ir.rayan.businesscore.basedata.controller;
 
+import ir.rayan.businesscore.basedata.dto.ApiResponse;
+import ir.rayan.businesscore.basedata.dto.request.CustomerRequest;
 import ir.rayan.businesscore.basedata.model.Customer;
-import ir.rayan.businesscore.basedata.repository.CustomerRepository;
+import ir.rayan.businesscore.basedata.service.CustomerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,29 +16,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private final CustomerRepository repo;
+    private final CustomerService service;
 
     @GetMapping
-    public List<Customer> list() {
-        return repo.findAll();
+    public ApiResponse<List<Customer>> list() {
+        return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
-    public Customer create(@RequestBody Customer customer) {
-        return repo.save(customer);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Customer> create(@Valid @RequestBody CustomerRequest request) {
+        return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Customer> update(@PathVariable Long id, @RequestBody Customer customer) {
-        return repo.findById(id).map(existing -> {
-            customer.setId(id);
-            return ResponseEntity.ok(repo.save(customer));
-        }).orElse(ResponseEntity.notFound().build());
+    public ApiResponse<Customer> update(@PathVariable Long id, @Valid @RequestBody CustomerRequest request) {
+        return ApiResponse.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repo.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

@@ -1,16 +1,21 @@
 package ir.rayan.businesscore.basedata.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "customers")
-@Data
+@Getter @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "name"})
 public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

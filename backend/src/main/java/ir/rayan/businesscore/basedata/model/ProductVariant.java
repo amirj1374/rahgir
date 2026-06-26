@@ -1,15 +1,20 @@
 package ir.rayan.businesscore.basedata.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "product_variants")
-@Data
+@Getter @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "sku"})
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
