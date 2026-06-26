@@ -22,6 +22,14 @@ public class Tenant {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TenantType type = TenantType.ONLINE_SHOP;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Plan plan = Plan.FREE;
+
     @Column(nullable = false)
     private boolean active = true;
 }

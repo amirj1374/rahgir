@@ -3,7 +3,7 @@ import type { Section } from './shared';
 import { useAuth } from '../../auth/AuthContext';
 
 function SidebarInner({ sec, onNav }: { sec: Section; onNav: (s: Section) => void }) {
-  const { has, user, logout } = useAuth();
+  const { has, hasFeature, user, logout } = useAuth();
   const item = (id: Section, icon: string, label: string, badge?: string, bbg?: string, bc?: string) => (
     <button
       key={id}
@@ -50,9 +50,9 @@ function SidebarInner({ sec, onNav }: { sec: Section; onNav: (s: Section) => voi
       item('tax', '💹', 'تنظیمات مالیاتی'),
     ]},
     ...(accessItems.length ? [{ label: 'مدیریت دسترسی', items: accessItems }] : []),
-    { label: 'یکپارچه‌سازی', items: [
+    ...(hasFeature('WOOCOMMERCE') ? [{ label: 'یکپارچه‌سازی', items: [
       item('woocommerce', '🔗', 'ووکامرس'),
-    ]},
+    ]}] : []),
   ];
 
   return (

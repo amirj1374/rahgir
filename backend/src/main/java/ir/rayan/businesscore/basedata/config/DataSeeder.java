@@ -51,6 +51,8 @@ public class DataSeeder implements CommandLineRunner {
 
         Tenant tenant = new Tenant();
         tenant.setName("فروشگاه آنلاین رایان");
+        tenant.setType(TenantType.ONLINE_SHOP);
+        tenant.setPlan(Plan.PRO);
         tenant.setActive(true);
         tenantRepo.save(tenant);
 

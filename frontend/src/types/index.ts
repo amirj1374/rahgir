@@ -90,6 +90,9 @@ export interface PermissionInfo {
   label: string;
 }
 
+export type Feature =
+  | 'SALES' | 'INVENTORY' | 'CRM' | 'ACCOUNTING' | 'REPORTS' | 'SUPPLIERS' | 'WOOCOMMERCE';
+
 export interface AuthUser {
   id: number;
   username: string;
@@ -97,11 +100,43 @@ export interface AuthUser {
   email?: string;
   tenantId: number;
   tenantName: string;
+  tenantType: string;
+  planLabel: string;
   roleId: number;
   roleName: string;
   permissions: Permission[];
+  features: Feature[];
   active: boolean;
   lastLogin?: string;
+}
+
+export interface Plan {
+  name: string;
+  label: string;
+  monthlyPrice: number;
+  features: Feature[];
+  maxUsers: number;
+  maxProducts: number;
+}
+
+export interface TenantTypeInfo {
+  name: string;
+  label: string;
+  recommendedFeatures: Feature[];
+}
+
+export interface Subscription {
+  tenantName: string;
+  type: string;
+  typeLabel: string;
+  plan: string;
+  planLabel: string;
+  monthlyPrice: number;
+  features: Feature[];
+  maxUsers: number;
+  usedUsers: number;
+  maxProducts: number;
+  usedProducts: number;
 }
 
 export interface AuthResponse {

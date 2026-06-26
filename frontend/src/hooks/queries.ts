@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import {
   companyApi, productsApi, customersApi, warehousesApi,
-  categoriesApi, unitsApi, taxRatesApi, usersApi, rolesApi,
+  categoriesApi, unitsApi, taxRatesApi, usersApi, rolesApi, subscriptionApi,
 } from '../api';
 import type {
   Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
@@ -65,6 +65,23 @@ export const warehouses = createResourceHooks<Warehouse>(['warehouses'], warehou
 export const categories = createResourceHooks<Category>(['categories'], categoriesApi);
 export const units      = createResourceHooks<Unit>(['units'], unitsApi);
 export const taxRates   = createResourceHooks<TaxRate>(['tax-rates'], taxRatesApi);
+
+// ─── Subscription / plans ───────────────────────────────────────────────────────
+export function useSubscription() {
+  return useQuery({ queryKey: ['subscription'], queryFn: subscriptionApi.current });
+}
+
+export function usePlans() {
+  return useQuery({ queryKey: ['plans'], queryFn: subscriptionApi.plans, staleTime: Infinity });
+}
+
+export function useChangePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (plan: string) => subscriptionApi.changePlan(plan),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['subscription'] }),
+  });
+}
 
 /** Read-only catalog of assignable permissions (for building roles). */
 export function usePermissionCatalog() {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { authApi, tokenStore, AUTH_EXPIRED_EVENT } from '../api';
-import type { AuthUser, Permission } from '../types';
+import type { AuthUser, Permission, Feature } from '../types';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -8,6 +8,7 @@ interface AuthContextValue {
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   has: (permission: Permission) => boolean;
+  hasFeature: (feature: Feature) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -48,8 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const hasFeature = useCallback(
+    (feature: Feature) => !!user?.features.includes(feature),
+    [user],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, has }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, has, hasFeature }}>
       {children}
     </AuthContext.Provider>
   );

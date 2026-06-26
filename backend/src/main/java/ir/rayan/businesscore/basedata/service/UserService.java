@@ -47,6 +47,12 @@ public class UserService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant", tenantId));
 
+        int maxUsers = tenant.getPlan().getMaxUsers();
+        if (maxUsers != -1 && repository.findByTenantId(tenantId).size() >= maxUsers) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "ظرفیت کاربران پلن فعلی (" + tenant.getPlan().getLabel() + ") تکمیل است؛ برای افزودن کاربر بیشتر پلن را ارتقا دهید");
+        }
+
         User user = new User();
         user.setTenant(tenant);
         user.setUsername(request.username());
