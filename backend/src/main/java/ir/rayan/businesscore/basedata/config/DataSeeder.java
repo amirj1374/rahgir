@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -32,6 +33,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepo;
     private final TenantRepository tenantRepo;
     private final RoleRepository roleRepo;
+    private final InvoiceRepository invoiceRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -46,6 +48,7 @@ public class DataSeeder implements CommandLineRunner {
         seedWarehouses(tid);
         seedProducts(tid);
         seedCustomers(tid);
+        seedInvoices(tid);
     }
 
     private Tenant seedTenantUsersAndRoles() {
@@ -182,5 +185,34 @@ public class DataSeeder implements CommandLineRunner {
         c.setGroup(Customer.CustomerGroup.VIP);
         c.setBalance(BigDecimal.valueOf(520_000));
         customerRepo.save(c);
+    }
+
+    private void seedInvoices(long tenantId) {
+        if (invoiceRepo.count() > 0) return;
+        Invoice inv = new Invoice();
+        inv.setTenantId(tenantId);
+        inv.setNumber("INV-1404-0001");
+        inv.setType(Invoice.InvoiceType.SALE);
+        inv.setCustomerName("علی محمدی");
+        inv.setIssueDate(LocalDate.now());
+
+        InvoiceItem item = new InvoiceItem();
+        item.setInvoice(inv);
+        item.setProductName("تی‌شرت مردانه");
+        item.setSku("TSH-001");
+        item.setQuantity(BigDecimal.valueOf(2));
+        item.setUnitPrice(BigDecimal.valueOf(185_000));
+        item.setTaxRate(10);
+        BigDecimal net = BigDecimal.valueOf(370_000);
+        BigDecimal tax = BigDecimal.valueOf(37_000);
+        item.setLineTotal(net.add(tax));
+        inv.getItems().add(item);
+
+        inv.setSubtotal(net);
+        inv.setTaxAmount(tax);
+        inv.setTotal(net.add(tax));
+        inv.setPaidAmount(net.add(tax));
+        inv.setStatus(Invoice.InvoiceStatus.PAID);
+        invoiceRepo.save(inv);
     }
 }

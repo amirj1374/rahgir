@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/
 import {
   companyApi, productsApi, customersApi, warehousesApi,
   categoriesApi, unitsApi, taxRatesApi, usersApi, rolesApi, subscriptionApi,
+  invoicesApi,
 } from '../api';
 import type {
   Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
-  UserAccount, Role, PermissionInfo,
+  UserAccount, Role, PermissionInfo, Invoice,
 } from '../types';
 
 /** A CRUD resource as exposed by the api module. */
@@ -65,6 +66,7 @@ export const warehouses = createResourceHooks<Warehouse>(['warehouses'], warehou
 export const categories = createResourceHooks<Category>(['categories'], categoriesApi);
 export const units      = createResourceHooks<Unit>(['units'], unitsApi);
 export const taxRates   = createResourceHooks<TaxRate>(['tax-rates'], taxRatesApi);
+export const invoices   = createResourceHooks<Invoice>(['invoices'], invoicesApi);
 
 // ─── Subscription / plans ───────────────────────────────────────────────────────
 export function useSubscription() {

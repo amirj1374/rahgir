@@ -2,7 +2,7 @@ import axios from 'axios';
 import type {
   Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
   AuthResponse, AuthUser, Role, UserAccount, PermissionInfo,
-  Subscription, Plan, TenantTypeInfo,
+  Subscription, Plan, TenantTypeInfo, Invoice,
 } from '../types';
 
 /** Backend wraps every response in { success, data, message }. */
@@ -83,6 +83,14 @@ export const subscriptionApi = {
   types: () => api.get<TenantTypeInfo[]>('/subscription/types').then(r => r.data),
   changePlan: (plan: string) => api.put<Subscription>(`/subscription/plan?plan=${plan}`).then(r => r.data),
   changeType: (type: string) => api.put<Subscription>(`/subscription/type?type=${type}`).then(r => r.data),
+};
+
+export const invoicesApi = {
+  list: () => api.get<Invoice[]>('/invoices').then(r => r.data),
+  get: (id: number) => api.get<Invoice>(`/invoices/${id}`).then(r => r.data),
+  create: (data: Invoice) => api.post<Invoice>('/invoices', data).then(r => r.data),
+  update: (id: number, data: Invoice) => api.put<Invoice>(`/invoices/${id}`, data).then(r => r.data),
+  delete: (id: number) => api.delete(`/invoices/${id}`).then(() => id),
 };
 
 export const companyApi = {

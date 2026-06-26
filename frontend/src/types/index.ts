@@ -80,6 +80,41 @@ export interface TaxRate {
   active?: boolean;
 }
 
+// ─── Sales / invoices ───────────────────────────────────────────────────────────
+export type InvoiceType = 'SALE' | 'PROFORMA';
+export type InvoiceStatus = 'DRAFT' | 'CONFIRMED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED';
+
+export interface InvoiceItem {
+  id?: number;
+  productId?: number;
+  productName?: string;
+  sku?: string;
+  quantity?: number;
+  unitPrice?: number;
+  discount?: number;
+  taxRate?: number;
+  lineTotal?: number;
+}
+
+export interface Invoice {
+  id?: number;
+  number?: string;
+  type?: InvoiceType;
+  status?: InvoiceStatus;
+  customerId?: number;
+  customerName?: string;
+  issueDate?: string;
+  dueDate?: string;
+  subtotal?: number;
+  discount?: number;
+  taxAmount?: number;
+  total?: number;
+  paidAmount?: number;
+  balance?: number;
+  notes?: string;
+  items: InvoiceItem[];
+}
+
 // ─── Auth / RBAC ────────────────────────────────────────────────────────────────
 export type Permission =
   | 'USER_MANAGE' | 'ROLE_MANAGE' | 'BASEDATA_READ' | 'BASEDATA_WRITE'
