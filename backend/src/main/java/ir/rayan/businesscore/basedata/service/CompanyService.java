@@ -1,6 +1,7 @@
 package ir.rayan.businesscore.basedata.service;
 
 import ir.rayan.businesscore.basedata.dto.request.CompanyRequest;
+import ir.rayan.businesscore.basedata.dto.response.CompanyResponse;
 import ir.rayan.businesscore.basedata.model.Company;
 import ir.rayan.businesscore.basedata.repository.CompanyRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +17,12 @@ public class CompanyService {
 
     private final CompanyRepository repository;
 
-    public Optional<Company> find() {
-        return repository.findAll().stream().findFirst();
+    public Optional<CompanyResponse> find() {
+        return repository.findAll().stream().findFirst().map(CompanyResponse::from);
     }
 
     @Transactional
-    public Company upsert(CompanyRequest request) {
+    public CompanyResponse upsert(CompanyRequest request) {
         Company company = repository.findAll().stream().findFirst().orElse(new Company());
         company.setName(request.name());
         company.setNationalId(request.nationalId());
@@ -32,6 +33,6 @@ public class CompanyService {
         if (request.currency() != null) company.setCurrency(request.currency());
         if (request.fiscalYearStart() != null) company.setFiscalYearStart(request.fiscalYearStart());
         if (request.vatRate() != null) company.setVatRate(request.vatRate());
-        return repository.save(company);
+        return CompanyResponse.from(repository.save(company));
     }
 }

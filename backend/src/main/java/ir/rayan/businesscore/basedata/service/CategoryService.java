@@ -1,6 +1,7 @@
 package ir.rayan.businesscore.basedata.service;
 
 import ir.rayan.businesscore.basedata.dto.request.CategoryRequest;
+import ir.rayan.businesscore.basedata.dto.response.CategoryResponse;
 import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
 import ir.rayan.businesscore.basedata.model.Category;
 import ir.rayan.businesscore.basedata.repository.CategoryRepository;
@@ -17,25 +18,25 @@ public class CategoryService {
 
     private final CategoryRepository repository;
 
-    public List<Category> findAll() {
-        return repository.findAll();
+    public List<CategoryResponse> findAll() {
+        return repository.findAll().stream().map(CategoryResponse::from).toList();
     }
 
     @Transactional
-    public Category create(CategoryRequest request) {
+    public CategoryResponse create(CategoryRequest request) {
         Category category = new Category();
         category.setName(request.name());
         category.setParentName(request.parentName());
-        return repository.save(category);
+        return CategoryResponse.from(repository.save(category));
     }
 
     @Transactional
-    public Category update(Long id, CategoryRequest request) {
+    public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", id));
         category.setName(request.name());
         category.setParentName(request.parentName());
-        return repository.save(category);
+        return CategoryResponse.from(repository.save(category));
     }
 
     @Transactional

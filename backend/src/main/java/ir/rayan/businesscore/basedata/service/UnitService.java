@@ -1,6 +1,7 @@
 package ir.rayan.businesscore.basedata.service;
 
 import ir.rayan.businesscore.basedata.dto.request.UnitRequest;
+import ir.rayan.businesscore.basedata.dto.response.UnitResponse;
 import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
 import ir.rayan.businesscore.basedata.model.Unit;
 import ir.rayan.businesscore.basedata.repository.UnitRepository;
@@ -17,27 +18,27 @@ public class UnitService {
 
     private final UnitRepository repository;
 
-    public List<Unit> findAll() {
-        return repository.findAll();
+    public List<UnitResponse> findAll() {
+        return repository.findAll().stream().map(UnitResponse::from).toList();
     }
 
     @Transactional
-    public Unit create(UnitRequest request) {
+    public UnitResponse create(UnitRequest request) {
         Unit unit = new Unit();
         unit.setName(request.name());
         unit.setSymbol(request.symbol());
         unit.setType(request.type());
-        return repository.save(unit);
+        return UnitResponse.from(repository.save(unit));
     }
 
     @Transactional
-    public Unit update(Long id, UnitRequest request) {
+    public UnitResponse update(Long id, UnitRequest request) {
         Unit unit = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Unit", id));
         unit.setName(request.name());
         unit.setSymbol(request.symbol());
         unit.setType(request.type());
-        return repository.save(unit);
+        return UnitResponse.from(repository.save(unit));
     }
 
     @Transactional

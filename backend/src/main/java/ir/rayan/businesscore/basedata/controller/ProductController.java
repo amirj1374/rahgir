@@ -2,7 +2,7 @@ package ir.rayan.businesscore.basedata.controller;
 
 import ir.rayan.businesscore.basedata.dto.ApiResponse;
 import ir.rayan.businesscore.basedata.dto.request.ProductRequest;
-import ir.rayan.businesscore.basedata.model.Product;
+import ir.rayan.businesscore.basedata.dto.response.ProductResponse;
 import ir.rayan.businesscore.basedata.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +19,18 @@ public class ProductController {
     private final ProductService service;
 
     @GetMapping
-    public ApiResponse<List<Product>> list() {
+    public ApiResponse<List<ProductResponse>> list() {
         return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<Product> create(@Valid @RequestBody ProductRequest request) {
+    public ApiResponse<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
         return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Product> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+    public ApiResponse<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
         return ApiResponse.ok(service.update(id, request));
     }
 

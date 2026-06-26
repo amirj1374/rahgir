@@ -1,8 +1,8 @@
 package ir.rayan.businesscore.basedata.service;
 
 import ir.rayan.businesscore.basedata.dto.request.CategoryRequest;
+import ir.rayan.businesscore.basedata.dto.response.CategoryResponse;
 import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
-import ir.rayan.businesscore.basedata.model.Category;
 import ir.rayan.businesscore.basedata.repository.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,18 +27,18 @@ class CategoryServiceTest {
 
     @Test
     void createPersistsCategory() {
-        Category saved = service.create(new CategoryRequest("پوشاک", "–"));
-        assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getName()).isEqualTo("پوشاک");
+        CategoryResponse saved = service.create(new CategoryRequest("پوشاک", "–"));
+        assertThat(saved.id()).isNotNull();
+        assertThat(saved.name()).isEqualTo("پوشاک");
         assertThat(repo.count()).isEqualTo(1);
     }
 
     @Test
     void updateChangesFields() {
-        Category saved = service.create(new CategoryRequest("قدیمی", null));
-        Category updated = service.update(saved.getId(), new CategoryRequest("جدید", "ریشه"));
-        assertThat(updated.getName()).isEqualTo("جدید");
-        assertThat(updated.getParentName()).isEqualTo("ریشه");
+        CategoryResponse saved = service.create(new CategoryRequest("قدیمی", null));
+        CategoryResponse updated = service.update(saved.id(), new CategoryRequest("جدید", "ریشه"));
+        assertThat(updated.name()).isEqualTo("جدید");
+        assertThat(updated.parentName()).isEqualTo("ریشه");
     }
 
     @Test
@@ -55,8 +55,8 @@ class CategoryServiceTest {
 
     @Test
     void deleteRemovesCategory() {
-        Category saved = service.create(new CategoryRequest("حذفی", null));
-        service.delete(saved.getId());
+        CategoryResponse saved = service.create(new CategoryRequest("حذفی", null));
+        service.delete(saved.id());
         assertThat(repo.count()).isZero();
     }
 }

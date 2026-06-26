@@ -1,6 +1,7 @@
 package ir.rayan.businesscore.basedata.service;
 
 import ir.rayan.businesscore.basedata.dto.request.CustomerRequest;
+import ir.rayan.businesscore.basedata.dto.response.CustomerResponse;
 import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
 import ir.rayan.businesscore.basedata.model.Customer;
 import ir.rayan.businesscore.basedata.repository.CustomerRepository;
@@ -18,23 +19,23 @@ public class CustomerService {
 
     private final CustomerRepository repository;
 
-    public List<Customer> findAll() {
-        return repository.findAll();
+    public List<CustomerResponse> findAll() {
+        return repository.findAll().stream().map(CustomerResponse::from).toList();
     }
 
     @Transactional
-    public Customer create(CustomerRequest request) {
+    public CustomerResponse create(CustomerRequest request) {
         Customer customer = new Customer();
         applyRequest(customer, request);
-        return repository.save(customer);
+        return CustomerResponse.from(repository.save(customer));
     }
 
     @Transactional
-    public Customer update(Long id, CustomerRequest request) {
+    public CustomerResponse update(Long id, CustomerRequest request) {
         Customer customer = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer", id));
         applyRequest(customer, request);
-        return repository.save(customer);
+        return CustomerResponse.from(repository.save(customer));
     }
 
     @Transactional

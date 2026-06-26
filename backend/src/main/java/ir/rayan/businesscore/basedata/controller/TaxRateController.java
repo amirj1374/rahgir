@@ -2,7 +2,7 @@ package ir.rayan.businesscore.basedata.controller;
 
 import ir.rayan.businesscore.basedata.dto.ApiResponse;
 import ir.rayan.businesscore.basedata.dto.request.TaxRateRequest;
-import ir.rayan.businesscore.basedata.model.TaxRate;
+import ir.rayan.businesscore.basedata.dto.response.TaxRateResponse;
 import ir.rayan.businesscore.basedata.service.TaxRateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +19,18 @@ public class TaxRateController {
     private final TaxRateService service;
 
     @GetMapping
-    public ApiResponse<List<TaxRate>> list() {
+    public ApiResponse<List<TaxRateResponse>> list() {
         return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<TaxRate> create(@Valid @RequestBody TaxRateRequest request) {
+    public ApiResponse<TaxRateResponse> create(@Valid @RequestBody TaxRateRequest request) {
         return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<TaxRate> update(@PathVariable Long id, @Valid @RequestBody TaxRateRequest request) {
+    public ApiResponse<TaxRateResponse> update(@PathVariable Long id, @Valid @RequestBody TaxRateRequest request) {
         return ApiResponse.ok(service.update(id, request));
     }
 

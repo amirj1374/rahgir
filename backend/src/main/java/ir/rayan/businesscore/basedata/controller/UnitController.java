@@ -2,7 +2,7 @@ package ir.rayan.businesscore.basedata.controller;
 
 import ir.rayan.businesscore.basedata.dto.ApiResponse;
 import ir.rayan.businesscore.basedata.dto.request.UnitRequest;
-import ir.rayan.businesscore.basedata.model.Unit;
+import ir.rayan.businesscore.basedata.dto.response.UnitResponse;
 import ir.rayan.businesscore.basedata.service.UnitService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +19,18 @@ public class UnitController {
     private final UnitService service;
 
     @GetMapping
-    public ApiResponse<List<Unit>> list() {
+    public ApiResponse<List<UnitResponse>> list() {
         return ApiResponse.ok(service.findAll());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<Unit> create(@Valid @RequestBody UnitRequest request) {
+    public ApiResponse<UnitResponse> create(@Valid @RequestBody UnitRequest request) {
         return ApiResponse.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Unit> update(@PathVariable Long id, @Valid @RequestBody UnitRequest request) {
+    public ApiResponse<UnitResponse> update(@PathVariable Long id, @Valid @RequestBody UnitRequest request) {
         return ApiResponse.ok(service.update(id, request));
     }
 
