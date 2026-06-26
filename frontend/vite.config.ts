@@ -22,7 +22,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (id.includes('node_modules/axios')) return 'vendor-axios';
+          if (id.includes('node_modules/@tanstack')) return 'vendor-query';
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'vendor-react';
+          if (id.includes('/modules/BasedataModule') || id.includes('/modules/basedata/')) return 'mod-basedata';
           if (id.includes('/modules/SalesModule'))      return 'mod-sales';
           if (id.includes('/modules/InventoryModule'))  return 'mod-inventory';
           if (id.includes('/modules/CRMModule'))        return 'mod-crm';
