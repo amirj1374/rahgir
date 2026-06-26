@@ -87,6 +87,8 @@ export type InvoiceStatus = 'DRAFT' | 'CONFIRMED' | 'PARTIALLY_PAID' | 'PAID' | 
 export interface InvoiceItem {
   id?: number;
   productId?: number;
+  variantId?: number;
+  variantLabel?: string;
   productName?: string;
   sku?: string;
   quantity?: number;
@@ -113,6 +115,70 @@ export interface Invoice {
   balance?: number;
   notes?: string;
   items: InvoiceItem[];
+}
+
+// ─── Inventory ──────────────────────────────────────────────────────────────────
+export type MovementType =
+  | 'PURCHASE' | 'SALE' | 'ADJUST_IN' | 'ADJUST_OUT'
+  | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'RETURN_IN';
+
+export interface StockPerWarehouse {
+  warehouseId: number;
+  warehouseName: string;
+  quantity: number;
+}
+
+export interface VariantStock {
+  variantId: number | null;
+  variantLabel: string;
+  sku?: string;
+  quantity: number;
+  warehouses: StockPerWarehouse[];
+}
+
+export interface StockLevel {
+  productId: number;
+  productName: string;
+  sku?: string;
+  hasVariants: boolean;
+  totalQuantity: number;
+  variants: VariantStock[];
+}
+
+export interface StockMovement {
+  id: number;
+  productId: number;
+  productName: string;
+  sku?: string;
+  variantId?: number;
+  variantLabel?: string;
+  warehouseId: number;
+  warehouseName: string;
+  type: MovementType;
+  typeLabel: string;
+  quantity: number;
+  reference?: string;
+  note?: string;
+  createdAt: string;
+  balanceAfter?: number;
+}
+
+export interface StockMovementInput {
+  productId: number;
+  variantId?: number | null;
+  warehouseId: number;
+  type: MovementType;
+  quantity: number;
+  note?: string;
+}
+
+export interface StockTransferInput {
+  productId: number;
+  variantId?: number | null;
+  fromWarehouseId: number;
+  toWarehouseId: number;
+  quantity: number;
+  note?: string;
 }
 
 // ─── Auth / RBAC ────────────────────────────────────────────────────────────────

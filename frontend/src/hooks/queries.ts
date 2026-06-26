@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/
 import {
   companyApi, productsApi, customersApi, warehousesApi,
   categoriesApi, unitsApi, taxRatesApi, usersApi, rolesApi, subscriptionApi,
-  invoicesApi,
+  invoicesApi, inventoryApi,
 } from '../api';
 import type {
   Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
@@ -84,6 +84,33 @@ export function useChangePlan() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['subscription'] }),
   });
 }
+
+// ─── Inventory ──────────────────────────────────────────────────────────────────
+export function useStockLevels() {
+  return useQuery({ queryKey: ['stock-levels'], queryFn: inventoryApi.levels });
+}
+
+export function useStockMovements(productId?: number) {
+  return useQuery({
+    queryKey: ['stock-movements', productId ?? 'all'],
+    queryFn: () => inventoryApi.movements(productId),
+  });
+}
+
+/** Recording a movement or transfer changes stock, so refresh both views. */
+function useInventoryMutation<TArgs>(fn: (args: TArgs) => Promise<unknown>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stock-levels'] });
+      qc.invalidateQueries({ queryKey: ['stock-movements'] });
+    },
+  });
+}
+
+export const useRecordMovement = () => useInventoryMutation(inventoryApi.record);
+export const useTransferStock = () => useInventoryMutation(inventoryApi.transfer);
 
 /** Read-only catalog of assignable permissions (for building roles). */
 export function usePermissionCatalog() {

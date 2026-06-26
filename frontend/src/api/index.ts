@@ -3,6 +3,7 @@ import type {
   Company, Product, Customer, Warehouse, Category, Unit, TaxRate,
   AuthResponse, AuthUser, Role, UserAccount, PermissionInfo,
   Subscription, Plan, TenantTypeInfo, Invoice,
+  StockLevel, StockMovement, StockMovementInput, StockTransferInput,
 } from '../types';
 
 /** Backend wraps every response in { success, data, message }. */
@@ -91,6 +92,14 @@ export const invoicesApi = {
   create: (data: Invoice) => api.post<Invoice>('/invoices', data).then(r => r.data),
   update: (id: number, data: Invoice) => api.put<Invoice>(`/invoices/${id}`, data).then(r => r.data),
   delete: (id: number) => api.delete(`/invoices/${id}`).then(() => id),
+};
+
+export const inventoryApi = {
+  levels: () => api.get<StockLevel[]>('/inventory/levels').then(r => r.data),
+  movements: (productId?: number) =>
+    api.get<StockMovement[]>('/inventory/movements', { params: productId ? { productId } : {} }).then(r => r.data),
+  record: (data: StockMovementInput) => api.post<StockMovement>('/inventory/movements', data).then(r => r.data),
+  transfer: (data: StockTransferInput) => api.post<StockMovement[]>('/inventory/transfer', data).then(r => r.data),
 };
 
 export const companyApi = {

@@ -6,6 +6,7 @@ import ir.rayan.businesscore.basedata.exception.ResourceNotFoundException;
 import ir.rayan.businesscore.basedata.model.Invoice;
 import ir.rayan.businesscore.basedata.model.InvoiceItem;
 import ir.rayan.businesscore.basedata.repository.InvoiceRepository;
+import ir.rayan.businesscore.basedata.repository.WarehouseRepository;
 import ir.rayan.businesscore.basedata.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public class InvoiceService {
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final InvoiceRepository repository;
+    private final WarehouseRepository warehouseRepository;
+    private final InventoryService inventoryService;
     private final CurrentUser currentUser;
 
     public List<InvoiceResponse> findAll() {
@@ -42,7 +45,22 @@ public class InvoiceService {
         invoice.setTenantId(currentUser.tenantId());
         invoice.setNumber(nextNumber());
         applyRequest(invoice, request);
-        return InvoiceResponse.from(repository.save(invoice));
+        Invoice saved = repository.save(invoice);
+        deductStockIfConfirmed(saved);
+        return InvoiceResponse.from(saved);
+    }
+
+    /**
+     * A confirmed sale (anything past DRAFT/CANCELLED) draws its goods out of the
+     * tenant's primary warehouse. Tenants without a warehouse simply skip this.
+     */
+    private void deductStockIfConfirmed(Invoice invoice) {
+        if (invoice.getStatus() == Invoice.InvoiceStatus.DRAFT
+                || invoice.getStatus() == Invoice.InvoiceStatus.CANCELLED) {
+            return;
+        }
+        warehouseRepository.findByTenantId(currentUser.tenantId()).stream().findFirst()
+                .ifPresent(warehouse -> inventoryService.recordSale(invoice, warehouse));
     }
 
     @Transactional
@@ -83,6 +101,8 @@ public class InvoiceService {
             InvoiceItem item = new InvoiceItem();
             item.setInvoice(invoice);
             item.setProductId(r.productId());
+            item.setVariantId(r.variantId());
+            item.setVariantLabel(r.variantLabel());
             item.setProductName(r.productName());
             item.setSku(r.sku());
             BigDecimal qty = r.quantity() != null ? r.quantity() : BigDecimal.ONE;

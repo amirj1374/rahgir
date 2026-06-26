@@ -29,11 +29,14 @@ public class DataSeeder implements CommandLineRunner {
     private final TaxRateRepository taxRepo;
     private final WarehouseRepository warehouseRepo;
     private final ProductRepository productRepo;
+    private final ProductVariantRepository productVariantRepo;
     private final CustomerRepository customerRepo;
     private final UserRepository userRepo;
     private final TenantRepository tenantRepo;
     private final RoleRepository roleRepo;
     private final InvoiceRepository invoiceRepo;
+    private final StockLevelRepository stockLevelRepo;
+    private final StockMovementRepository stockMovementRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -47,6 +50,7 @@ public class DataSeeder implements CommandLineRunner {
         seedTaxRates(tid);
         seedWarehouses(tid);
         seedProducts(tid);
+        seedInitialStock(tid);
         seedCustomers(tid);
         seedInvoices(tid);
     }
@@ -158,9 +162,25 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedProducts(long tenantId) {
         if (productRepo.count() > 0) return;
+
+        // A variable product: one t-shirt tracked per colour/size combination.
+        Product tshirt = new Product();
+        tshirt.setTenantId(tenantId);
+        tshirt.setSku("TSH-NIKE");
+        tshirt.setName("تی‌شرت نایک");
+        tshirt.setCategory("پوشاک");
+        tshirt.setPrice(BigDecimal.valueOf(185_000));
+        tshirt.setType(Product.ProductType.VARIABLE);
+        tshirt.setStock(10);
+        productRepo.save(tshirt);
+        seedVariant(tshirt, "TSH-NIKE-WH-S", "رنگ", "سفید", "سایز", "S", 185_000, 2);
+        seedVariant(tshirt, "TSH-NIKE-BK-L", "رنگ", "مشکی", "سایز", "L", 185_000, 3);
+        seedVariant(tshirt, "TSH-NIKE-OR-XL", "رنگ", "نارنجی", "سایز", "XL", 195_000, 4);
+        seedVariant(tshirt, "TSH-NIKE-WH-M", "رنگ", "سفید", "سایز", "M", 185_000, 1);
+
+        // Simple products: stocked as a whole.
         record P(String sku, String name, String cat, long price, int stock) {}
         List<P> rows = List.of(
-                new P("TSH-001", "تی‌شرت مردانه", "پوشاک", 185_000, 125),
                 new P("SHO-002", "کفش اسپورت رانینگ", "کفش و کیف", 850_000, 12),
                 new P("PRF-005", "عطر مردانه کلاسیک", "عطر و بهداشت", 1_200_000, 35)
         );
@@ -174,6 +194,76 @@ public class DataSeeder implements CommandLineRunner {
             p.setStock(r.stock());
             productRepo.save(p);
         }
+    }
+
+    private void seedVariant(Product product, String sku, String a1n, String a1v, String a2n, String a2v, long price, int stock) {
+        ProductVariant v = new ProductVariant();
+        v.setProduct(product);
+        v.setSku(sku);
+        v.setAttr1Name(a1n);
+        v.setAttr1Value(a1v);
+        v.setAttr2Name(a2n);
+        v.setAttr2Value(a2v);
+        v.setPrice(BigDecimal.valueOf(price));
+        v.setStock(stock);
+        productVariantRepo.save(v);
+    }
+
+    /**
+     * Opens the stock ledger: each product's (or variant's) starting count becomes
+     * a PURCHASE into the main warehouse, so the ledger and the cached levels agree.
+     */
+    private void seedInitialStock(long tenantId) {
+        if (stockLevelRepo.count() > 0) return;
+        Warehouse warehouse = warehouseRepo.findByTenantId(tenantId).stream().findFirst().orElse(null);
+        if (warehouse == null) return;
+
+        for (Product p : productRepo.findByTenantId(tenantId)) {
+            List<ProductVariant> variants = productVariantRepo.findByProductId(p.getId());
+            if (variants.isEmpty()) {
+                openingStock(tenantId, warehouse, p, null,
+                        BigDecimal.valueOf(p.getStock() == null ? 0 : p.getStock()));
+            } else {
+                for (ProductVariant v : variants) {
+                    openingStock(tenantId, warehouse, p, v,
+                            BigDecimal.valueOf(v.getStock() == null ? 0 : v.getStock()));
+                }
+            }
+        }
+    }
+
+    private void openingStock(long tenantId, Warehouse warehouse, Product p, ProductVariant v, BigDecimal qty) {
+        long variantId = v != null ? v.getId() : 0L;
+        String variantLabel = v != null ? join(v.getAttr1Value(), v.getAttr2Value()) : null;
+
+        StockLevel level = new StockLevel();
+        level.setTenantId(tenantId);
+        level.setProductId(p.getId());
+        level.setVariantId(variantId);
+        level.setWarehouseId(warehouse.getId());
+        level.setQuantity(qty);
+        stockLevelRepo.save(level);
+
+        StockMovement m = new StockMovement();
+        m.setTenantId(tenantId);
+        m.setProductId(p.getId());
+        m.setProductName(p.getName());
+        m.setSku(v != null ? v.getSku() : p.getSku());
+        m.setVariantId(variantId);
+        m.setVariantLabel(variantLabel);
+        m.setWarehouseId(warehouse.getId());
+        m.setWarehouseName(warehouse.getName());
+        m.setType(StockMovement.MovementType.PURCHASE);
+        m.setQuantity(qty);
+        m.setReference("موجودی اولیه");
+        m.setBalanceAfter(qty);
+        stockMovementRepo.save(m);
+    }
+
+    private String join(String a, String b) {
+        if (a == null || a.isBlank()) return b;
+        if (b == null || b.isBlank()) return a;
+        return a + " / " + b;
     }
 
     private void seedCustomers(long tenantId) {
@@ -198,8 +288,9 @@ public class DataSeeder implements CommandLineRunner {
 
         InvoiceItem item = new InvoiceItem();
         item.setInvoice(inv);
-        item.setProductName("تی‌شرت مردانه");
-        item.setSku("TSH-001");
+        item.setProductName("تی‌شرت نایک");
+        item.setVariantLabel("مشکی / L");
+        item.setSku("TSH-NIKE-BK-L");
         item.setQuantity(BigDecimal.valueOf(2));
         item.setUnitPrice(BigDecimal.valueOf(185_000));
         item.setTaxRate(10);

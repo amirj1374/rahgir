@@ -18,6 +18,8 @@ const GROUP_LABEL: Record<string, string> = { VIP: 'VIP', WHOLESALE: 'عمده',
 interface DraftItem {
   key: number;
   productId?: number;
+  variantId?: number;
+  variantLabel?: string;
   productName: string;
   sku?: string;
   qty: number;
@@ -49,17 +51,35 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
   const [showProdModal, setShowProdModal] = useState(false);
   const [showCustModal, setShowCustModal] = useState(false);
   const [prodSearch, setProdSearch] = useState('');
+  const [expandedProduct, setExpandedProduct] = useState<number | undefined>();
   const [custSearch, setCustSearch] = useState('');
   const [listFilter, setListFilter] = useState<InvoiceStatus | 'all'>('all');
   const [error, setError] = useState('');
 
   const addProduct = useCallback((p: Product) => {
+    // Variable products can't be sold as a whole — a variant must be chosen.
+    if (p.variants && p.variants.length > 0) {
+      setExpandedProduct(prev => (prev === p.id ? undefined : p.id));
+      return;
+    }
     setItems(prev => [...prev, {
       key: Date.now(), productId: p.id, productName: p.name, sku: p.sku,
       qty: 1, unitPrice: p.price ?? 0, discount: 0, taxRate: defaultTax,
     }]);
     setShowProdModal(false);
     setProdSearch('');
+  }, []);
+
+  const addVariant = useCallback((p: Product, v: NonNullable<Product['variants']>[number]) => {
+    const label = [v.attr1Value, v.attr2Value].filter(Boolean).join(' / ');
+    setItems(prev => [...prev, {
+      key: Date.now(), productId: p.id, variantId: v.id, variantLabel: label,
+      productName: p.name, sku: v.sku ?? p.sku,
+      qty: 1, unitPrice: v.price ?? p.price ?? 0, discount: 0, taxRate: defaultTax,
+    }]);
+    setShowProdModal(false);
+    setProdSearch('');
+    setExpandedProduct(undefined);
   }, []);
 
   const patchItem = (key: number, field: keyof DraftItem, raw: string) => {
@@ -93,7 +113,8 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
       paidAmount,
       notes,
       items: items.map<InvoiceItem>(it => ({
-        productId: it.productId, productName: it.productName, sku: it.sku,
+        productId: it.productId, variantId: it.variantId, variantLabel: it.variantLabel,
+        productName: it.productName, sku: it.sku,
         quantity: it.qty, unitPrice: it.unitPrice, discount: it.discount, taxRate: it.taxRate,
       })),
     };
@@ -249,6 +270,7 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
                     <div style={{ fontSize: 11, color: '#374151', fontWeight: 700 }}>{i + 1}</div>
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ fontSize: 12, color: '#e8edf5', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.productName}</div>
+                      {it.variantLabel && <div style={{ fontSize: 10, color: '#a78bfa', marginTop: 2, fontWeight: 600 }}>{it.variantLabel}</div>}
                       {it.sku && <div style={{ fontSize: 9, color: '#374151', marginTop: 1, direction: 'ltr', textAlign: 'right' }}>{it.sku}</div>}
                     </div>
                     <div><input type="number" value={it.qty} onChange={e => patchItem(it.key, 'qty', e.target.value)} style={cellInput(58, 'center')} /></div>
@@ -353,15 +375,35 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
         <Modal onClose={() => setShowProdModal(false)} width={620}>
           <ModalSearch value={prodSearch} onChange={setProdSearch} placeholder="جستجو نام یا کد محصول..." onClose={() => setShowProdModal(false)} />
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-            {modalProds.map(p => (
-              <div key={p.id} onClick={() => addProduct(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#e8edf5' }}>{p.name}</div>
-                  <div style={{ fontSize: 10, color: '#4b5563', direction: 'ltr', textAlign: 'right', marginTop: 3 }}>{p.sku}</div>
+            {modalProds.map(p => {
+              const hasVariants = !!p.variants && p.variants.length > 0;
+              const isOpen = expandedProduct === p.id;
+              return (
+                <div key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                  <div onClick={() => addProduct(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', cursor: 'pointer' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#e8edf5' }}>
+                        {p.name}
+                        {hasVariants && <span style={{ marginRight: 6, fontSize: 9, color: '#a78bfa', background: 'rgba(167,139,250,.1)', padding: '1px 7px', borderRadius: 20 }}>متغیر · {p.variants!.length} تنوع</span>}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#4b5563', direction: 'ltr', textAlign: 'right', marginTop: 3 }}>{p.sku}</div>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#e8a94c', fontVariantNumeric: 'tabular-nums' }}>
+                      {hasVariants ? (isOpen ? '▾' : '◂ انتخاب تنوع') : fmt(p.price ?? 0)}
+                    </div>
+                  </div>
+                  {hasVariants && isOpen && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '0 16px 12px' }}>
+                      {p.variants!.map(v => (
+                        <button key={v.id} onClick={() => addVariant(p, v)} style={{ background: 'rgba(167,139,250,.1)', border: '1px solid rgba(167,139,250,.3)', color: '#c4b5fd', padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Vazirmatn',sans-serif" }}>
+                          {[v.attr1Value, v.attr2Value].filter(Boolean).join(' / ')} · {fmt(v.price ?? p.price ?? 0)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#e8a94c', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.price ?? 0)}</div>
-              </div>
-            ))}
+              );
+            })}
             {modalProds.length === 0 && <div style={{ padding: 30, textAlign: 'center', fontSize: 12, color: '#374151' }}>محصولی یافت نشد</div>}
           </div>
         </Modal>

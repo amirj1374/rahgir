@@ -26,6 +26,8 @@ public class InvoiceItem {
     private Invoice invoice;
 
     private Long productId;
+    private Long variantId;
+    private String variantLabel;
     private String productName;
     private String sku;
 

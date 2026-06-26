@@ -17,12 +17,14 @@ public record InvoiceResponse(
         String notes, List<ItemResponse> items
 ) {
     public record ItemResponse(
-            Long id, Long productId, String productName, String sku,
+            Long id, Long productId, Long variantId, String variantLabel,
+            String productName, String sku,
             BigDecimal quantity, BigDecimal unitPrice, BigDecimal discount,
             Integer taxRate, BigDecimal lineTotal
     ) {
         static ItemResponse from(InvoiceItem i) {
-            return new ItemResponse(i.getId(), i.getProductId(), i.getProductName(), i.getSku(),
+            return new ItemResponse(i.getId(), i.getProductId(), i.getVariantId(), i.getVariantLabel(),
+                    i.getProductName(), i.getSku(),
                     i.getQuantity(), i.getUnitPrice(), i.getDiscount(), i.getTaxRate(), i.getLineTotal());
         }
     }

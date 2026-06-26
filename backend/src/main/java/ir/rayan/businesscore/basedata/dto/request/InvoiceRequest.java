@@ -24,6 +24,8 @@ public record InvoiceRequest(
 ) {
     public record InvoiceItemRequest(
             Long productId,
+            Long variantId,
+            String variantLabel,
             String productName,
             String sku,
             BigDecimal quantity,

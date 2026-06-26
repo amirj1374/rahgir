@@ -33,7 +33,7 @@ class InvoiceServiceTest {
 
     private InvoiceRequest.InvoiceItemRequest item(String name, long qty, long price, int tax) {
         return new InvoiceRequest.InvoiceItemRequest(
-                null, name, null, BigDecimal.valueOf(qty), BigDecimal.valueOf(price), BigDecimal.ZERO, tax);
+                null, null, null, name, null, BigDecimal.valueOf(qty), BigDecimal.valueOf(price), BigDecimal.ZERO, tax);
     }
 
     @Test

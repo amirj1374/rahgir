@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").hasAuthority("USER_MANAGE")
                         .requestMatchers("/api/roles/**").hasAuthority("ROLE_MANAGE")
                         .requestMatchers("/api/invoices/**").hasAuthority("SALES")
+                        .requestMatchers("/api/inventory/**").hasAuthority("INVENTORY")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
