@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { companyApi, productsApi, customersApi, warehousesApi, categoriesApi, unitsApi, taxRatesApi } from './api';
 import type { Company, Product, Customer, Warehouse, Category, Unit, TaxRate } from './types';
+import SalesModule from './modules/SalesModule';
+import InventoryModule from './modules/InventoryModule';
+import CRMModule from './modules/CRMModule';
+import AccountingModule from './modules/AccountingModule';
+import ReportsModule from './modules/ReportsModule';
+import SuppliersModule from './modules/SuppliersModule';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Section =
@@ -1081,9 +1087,54 @@ const HDR_BTN: Record<Section, string> = {
   users: '+ کاربر', woocommerce: 'اتصال ←',
 };
 
+type AppModule = 'home' | 'basedata' | 'sales' | 'inventory' | 'crm' | 'accounting' | 'reports' | 'suppliers';
+
+const MODULE_CARDS: Array<{ id: AppModule; icon: string; label: string; desc: string; color: string }> = [
+  { id: 'basedata', icon: '⚙️', label: 'اطلاعات پایه', desc: 'محصولات، مشتریان، انبارها و تنظیمات', color: '#e8a94c' },
+  { id: 'sales', icon: '🛍️', label: 'فروش', desc: 'فاکتور، پیش‌فاکتور و مدیریت فروش', color: '#f43f5e' },
+  { id: 'inventory', icon: '📦', label: 'انبارداری', desc: 'موجودی، ورود/خروج و جابجایی', color: '#4ade80' },
+  { id: 'crm', icon: '👥', label: 'مشتریان (CRM)', desc: 'پروفایل، تاریخچه و دفتر حساب', color: '#38bdf8' },
+  { id: 'accounting', icon: '💜', label: 'حسابداری', desc: 'داشبورد مالی، چک و سود و زیان', color: '#a78bfa' },
+  { id: 'reports', icon: '📊', label: 'گزارشات', desc: 'تحلیل فروش، انبار و مالی', color: '#fb923c' },
+  { id: 'suppliers', icon: '🏭', label: 'تامین‌کنندگان', desc: 'سفارشات خرید و دریافت کالا', color: '#22d3ee' },
+];
+
+function HomeScreen({ onNavigate }: { onNavigate: (m: AppModule) => void }) {
+  return (
+    <div style={{ minHeight: '100vh', background: '#060a13', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, fontFamily: 'Vazirmatn', direction: 'rtl' }}>
+      <div style={{ marginBottom: 48, textAlign: 'center' }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>🏢</div>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 900, color: '#f0f4ff', letterSpacing: '-0.5px' }}>بیزنس‌کور</h1>
+        <p style={{ margin: '8px 0 0', fontSize: 14, color: '#64748b' }}>سیستم یکپارچه مدیریت کسب‌وکار</p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, maxWidth: 900, width: '100%' }}>
+        {MODULE_CARDS.map(m => (
+          <button key={m.id} onClick={() => onNavigate(m.id)} style={{ background: '#0a1120', border: `1px solid ${m.color}22`, borderRadius: 14, padding: '22px 20px', cursor: 'pointer', textAlign: 'right', transition: 'border-color .2s', fontFamily: 'Vazirmatn' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = m.color + '66')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = m.color + '22')}>
+            <div style={{ fontSize: 28, marginBottom: 10 }}>{m.icon}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: m.color, marginBottom: 6 }}>{m.label}</div>
+            <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>{m.desc}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [appModule, setAppModule] = useState<AppModule>('home');
   const [sec, setSec] = useState<Section>('dashboard');
+
+  if (appModule === 'sales')       return <SalesModule onBack={() => setAppModule('home')} />;
+  if (appModule === 'inventory')   return <InventoryModule onBack={() => setAppModule('home')} />;
+  if (appModule === 'crm')         return <CRMModule onBack={() => setAppModule('home')} />;
+  if (appModule === 'accounting')  return <AccountingModule onBack={() => setAppModule('home')} />;
+  if (appModule === 'reports')     return <ReportsModule onBack={() => setAppModule('home')} />;
+  if (appModule === 'suppliers')   return <SuppliersModule onBack={() => setAppModule('home')} />;
+  if (appModule === 'home')        return <HomeScreen onNavigate={setAppModule} />;
+
   const meta = META[sec];
 
   const renderSection = () => {
@@ -1110,6 +1161,7 @@ export default function App() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         {/* Header */}
         <header style={{ height: 56, flexShrink: 0, background: '#070d1a', borderBottom: '1px solid rgba(255,255,255,.05)', display: 'flex', alignItems: 'center', padding: '0 18px', gap: 11 }}>
+          <button onClick={() => setAppModule('home')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 12, fontFamily: 'Vazirmatn', marginLeft: 8 }}>← خانه</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 10, color: '#374151', fontWeight: 500, marginBottom: 1 }}>{meta.crumb}</div>
             <div style={{ fontSize: 14, fontWeight: 800, color: '#f0f4ff', letterSpacing: '-.3px' }}>{meta.title}</div>
