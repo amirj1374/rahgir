@@ -1,12 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { companyApi, productsApi, customersApi, warehousesApi, categoriesApi, unitsApi, taxRatesApi } from './api';
 import type { Company, Product, Customer, Warehouse, Category, Unit, TaxRate } from './types';
-import SalesModule from './modules/SalesModule';
-import InventoryModule from './modules/InventoryModule';
-import CRMModule from './modules/CRMModule';
-import AccountingModule from './modules/AccountingModule';
-import ReportsModule from './modules/ReportsModule';
-import SuppliersModule from './modules/SuppliersModule';
+import { COLOR } from './styles/tokens';
+
+const SalesModule      = lazy(() => import('./modules/SalesModule'));
+const InventoryModule  = lazy(() => import('./modules/InventoryModule'));
+const CRMModule        = lazy(() => import('./modules/CRMModule'));
+const AccountingModule = lazy(() => import('./modules/AccountingModule'));
+const ReportsModule    = lazy(() => import('./modules/ReportsModule'));
+const SuppliersModule  = lazy(() => import('./modules/SuppliersModule'));
+
+function ModuleLoader() {
+  return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: COLOR.bg, color: COLOR.textFaint, fontSize: 13, fontFamily: "'Vazirmatn',sans-serif", gap: 10 }}>
+      <div style={{ width: 18, height: 18, border: `2px solid ${COLOR.gold}44`, borderTopColor: COLOR.gold, borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
+      در حال بارگذاری…
+    </div>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Section =
@@ -1127,13 +1138,21 @@ export default function App() {
   const [appModule, setAppModule] = useState<AppModule>('home');
   const [sec, setSec] = useState<Section>('dashboard');
 
-  if (appModule === 'sales')       return <SalesModule onBack={() => setAppModule('home')} />;
-  if (appModule === 'inventory')   return <InventoryModule onBack={() => setAppModule('home')} />;
-  if (appModule === 'crm')         return <CRMModule onBack={() => setAppModule('home')} />;
-  if (appModule === 'accounting')  return <AccountingModule onBack={() => setAppModule('home')} />;
-  if (appModule === 'reports')     return <ReportsModule onBack={() => setAppModule('home')} />;
-  if (appModule === 'suppliers')   return <SuppliersModule onBack={() => setAppModule('home')} />;
-  if (appModule === 'home')        return <HomeScreen onNavigate={setAppModule} />;
+  const goHome = useCallback(() => setAppModule('home'), []);
+
+  if (appModule !== 'basedata') {
+    return (
+      <Suspense fallback={<ModuleLoader />}>
+        {appModule === 'home'        && <HomeScreen onNavigate={setAppModule} />}
+        {appModule === 'sales'       && <SalesModule      onBack={goHome} />}
+        {appModule === 'inventory'   && <InventoryModule  onBack={goHome} />}
+        {appModule === 'crm'         && <CRMModule        onBack={goHome} />}
+        {appModule === 'accounting'  && <AccountingModule onBack={goHome} />}
+        {appModule === 'reports'     && <ReportsModule    onBack={goHome} />}
+        {appModule === 'suppliers'   && <SuppliersModule  onBack={goHome} />}
+      </Suspense>
+    );
+  }
 
   const meta = META[sec];
 

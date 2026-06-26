@@ -1,6 +1,5 @@
-import { useState } from 'react';
-
-const fmt = (n: number) => n.toLocaleString('fa-IR');
+import { useState, useMemo, useCallback } from 'react';
+import { fmtNum as fmt } from '../hooks/useFormat';
 
 type InvStatus = 'draft' | 'pending' | 'paid' | 'cancelled';
 interface InvItem { id: number; sku: string; name: string; variantLabel: string; qty: number; unitPrice: number; discPct: number; total: number; }
@@ -80,13 +79,13 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
 
   const invNumber = 'INV-1405-' + String(invCounter).padStart(3, '0');
 
-  const addItem = (item: Omit<InvItem, 'id'>) => {
+  const addItem = useCallback((item: Omit<InvItem, 'id'>) => {
     setInvItems(prev => [...prev, { id: Date.now(), ...item }]);
     setShowProdModal(false);
     setModalSelProd(null);
     setModalAttrs({});
     setModalSearch('');
-  };
+  }, []);
 
   const updateItemField = (id: number, field: 'qty' | 'unitPrice' | 'discPct', rawVal: string) => {
     const num = parseFloat(rawVal.replace(/[^0-9.]/g, '')) || 0;
@@ -122,9 +121,9 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
     setSec('invoices');
   };
 
-  const filteredInvoices = savedInvoices.filter(inv => invListFilter === 'all' || inv.status === invListFilter);
-  const totalRev   = savedInvoices.filter(i => i.status === 'paid').reduce((a, i) => a + i.total, 0);
-  const pendingRev = savedInvoices.filter(i => i.status === 'pending').reduce((a, i) => a + i.total, 0);
+  const filteredInvoices = useMemo(() => savedInvoices.filter(inv => invListFilter === 'all' || inv.status === invListFilter), [savedInvoices, invListFilter]);
+  const totalRev   = useMemo(() => savedInvoices.filter(i => i.status === 'paid').reduce((a, i) => a + i.total, 0), [savedInvoices]);
+  const pendingRev = useMemo(() => savedInvoices.filter(i => i.status === 'pending').reduce((a, i) => a + i.total, 0), [savedInvoices]);
 
   const navItems = [
     { id: 'dashboard',   icon: '📊', label: 'لوح‌کل فروش',    group: 'داشبورد' },
@@ -137,9 +136,9 @@ export default function SalesModule({ onBack }: { onBack: () => void }) {
 
   const pageTitles: Record<SalesSec, string> = { 'new-invoice': 'فاکتور جدید', invoices: 'لیست فاکتورها', dashboard: 'لوح‌کل فروش', proforma: 'پیش‌فاکتور', returns: 'مرجوعی فروش', reports: 'گزارش فروش' };
 
-  const modalProds = ALL_PRODUCTS.filter(p => !modalSearch || p.name.includes(modalSearch) || p.sku.toLowerCase().includes(modalSearch.toLowerCase()));
+  const modalProds = useMemo(() => ALL_PRODUCTS.filter(p => !modalSearch || p.name.includes(modalSearch) || p.sku.toLowerCase().includes(modalSearch.toLowerCase())), [modalSearch]);
 
-  const modalCusts = ALL_CUSTOMERS.filter(c => !custSearch || c.name.includes(custSearch) || c.phone.includes(custSearch));
+  const modalCusts = useMemo(() => ALL_CUSTOMERS.filter(c => !custSearch || c.name.includes(custSearch) || c.phone.includes(custSearch)), [custSearch]);
 
   const selectedAttrsComplete = modalSelProd?.isVariable && modalSelProd.attributes.every(a => !!modalAttrs[a.key]);
   const selectedVariant = selectedAttrsComplete && modalSelProd ? modalSelProd.variants.find((v: any) => modalSelProd.attributes.every((a: any) => v[a.key] === modalAttrs[a.key])) : null;
