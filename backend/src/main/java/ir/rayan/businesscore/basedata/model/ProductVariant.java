@@ -24,7 +24,8 @@ public class ProductVariant {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(unique = true)
+    // SKU is unique per tenant (enforced at the product level), not globally,
+    // so different businesses may reuse the same variant codes.
     private String sku;
 
     private String attr1Name;

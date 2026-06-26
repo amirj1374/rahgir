@@ -30,8 +30,8 @@ public class SubscriptionService {
 
     public SubscriptionResponse current() {
         Tenant tenant = currentTenant();
-        int usedUsers = (int) userRepository.findByTenantId(tenant.getId()).size();
-        int usedProducts = (int) productRepository.count();
+        int usedUsers = userRepository.findByTenantId(tenant.getId()).size();
+        int usedProducts = (int) productRepository.countByTenantId(tenant.getId());
         return SubscriptionResponse.of(tenant, usedUsers, usedProducts);
     }
 
