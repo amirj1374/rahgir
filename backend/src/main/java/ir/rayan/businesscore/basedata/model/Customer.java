@@ -30,6 +30,7 @@ public class Customer {
     private String address;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "customer_group")
     private CustomerGroup group = CustomerGroup.RETAIL;
 
     @Enumerated(EnumType.STRING)
